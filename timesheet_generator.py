@@ -46,18 +46,31 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
         cell.alignment = center_alignment
         cell.border = thin_border
 
-    # Expand Leave Data
+    # ✅ **Fix Leave Data Expansion**
     expanded_leave_details = []
-    for leave_date, leave_type in leave_details:
-        if "to" in leave_date:
-            start_date, end_date = map(lambda x: datetime.strptime(x.strip(), "%d-%B"), leave_date.split("to"))
-            while start_date <= end_date:
-                expanded_leave_details.append((start_date.strftime("%d-%B-%Y"), leave_type))
-                start_date += timedelta(days=1)
-        else:
-            expanded_leave_details.append((leave_date, leave_type))
+    for leave_entry in leave_details:
+        try:
+            # Debugging - Print leave entry
+            print(f"Processing leave entry: {leave_entry}")
 
-    # Data Rows
+            if isinstance(leave_entry, tuple) and len(leave_entry) == 3:
+                start_date, end_date, leave_type = leave_entry
+                start_date = datetime.strptime(start_date, "%d-%B").replace(year=year)
+                end_date = datetime.strptime(end_date, "%d-%B").replace(year=year)
+
+                # Expand date range for leave
+                while start_date <= end_date:
+                    expanded_leave_details.append((start_date.strftime("%d-%B-%Y"), leave_type))
+                    start_date += timedelta(days=1)
+            elif isinstance(leave_entry, tuple) and len(leave_entry) == 2:
+                expanded_leave_details.append(leave_entry)
+            else:
+                raise ValueError(f"Invalid leave entry format: {leave_entry}")
+
+        except ValueError as e:
+            print(f"Error processing leave entry: {leave_entry} -> {e}")
+
+    # ✅ **Fix Processing Data Rows**
     current_row = 2  # Start data after headers
     _, days_in_month = monthrange(year, month)
     totals = {"At Work": 0, "Public Holiday": 0, "Sick Leave": 0, "Childcare Leave": 0, "Annual Leave": 0}

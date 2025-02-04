@@ -114,11 +114,30 @@ async def start_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
     query = update.callback_query
     await query.answer()
 
-    selected_start_date = query.data.split("_")[1]
-    context.user_data["start_date"] = selected_start_date
-    logger.info(f"User selected start date: {selected_start_date}")
+    try:
+        # Ensure callback data has the correct format: start_date_6-June
+        callback_data = query.data
+        if not callback_data.startswith("start_date_"):
+            logger.error(f"Invalid start date callback data: {callback_data}")
+            await query.message.reply_text("Error: Invalid date format received. Please restart.")
+            return
 
-    await show_end_date_selection(update, context)
+        # Extract and validate the date
+        selected_start_date = callback_data.replace("start_date_", "")
+        datetime.strptime(selected_start_date, "%d-%B")  # Validate format
+
+        # Store the valid date in context
+        context.user_data["start_date"] = selected_start_date
+        logger.info(f"User selected start date: {selected_start_date}")
+        print("selected_start_date chosen by user", selected_start_date)
+
+        # Move to End Date selection
+        await show_end_date_selection(update, context)
+
+    except ValueError:
+        logger.error(f"Invalid date format received: {callback_data}")
+        await query.message.reply_text("Error: Selected date format is incorrect. Please try again.")
+
 
 # ✅ Show End Date Selection (🔧 FIXED MISSING FUNCTION)
 async def show_end_date_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -144,29 +163,50 @@ async def end_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
-    selected_end_date = query.data.split("_")[1]
-    user_id = str(update.effective_user.id)
-    month = context.user_data.get("month")
-    start_date = context.user_data.get("start_date")
-    leave_type = context.user_data.get("leave_type")
+    try:
+        # Ensure callback data has the correct format: end_date_6-June
+        callback_data = query.data
+        if not callback_data.startswith("end_date_"):
+            logger.error(f"Invalid end date callback data: {callback_data}")
+            await query.message.reply_text("Error: Invalid date format received. Please restart.")
+            return
 
-    if not start_date or not leave_type:
-        await query.message.reply_text("Error: Missing leave details. Please restart.")
-        return
+        # Extract and validate the date
+        selected_end_date = callback_data.replace("end_date_", "")
+        datetime.strptime(selected_end_date, "%d-%B")  # Validate format
 
-    if user_id not in user_leaves:
-        user_leaves[user_id] = {}
-    if month not in user_leaves[user_id]:
-        user_leaves[user_id][month] = []
+        user_id = str(update.effective_user.id)
+        month = context.user_data.get("month")
+        start_date = context.user_data.get("start_date")
+        leave_type = context.user_data.get("leave_type")
 
-    user_leaves[user_id][month].append((f"{start_date} to {selected_end_date}", leave_type))
+        if not start_date or not leave_type:
+            await query.message.reply_text("Error: Missing leave details. Please restart.")
+            return
 
-    buttons = [
-        [InlineKeyboardButton("Yes, Add More Leaves", callback_data="apply_leave")],
-        [InlineKeyboardButton("No, Generate Timesheet", callback_data="generate_timesheet_after_leave")]
-    ]
-    reply_markup = InlineKeyboardMarkup(buttons)
-    await query.message.reply_text("Do you want to add more leaves?", reply_markup=reply_markup)
+        # ✅ Fix: Validate date format before storing
+        start_date_obj = datetime.strptime(start_date, "%d-%B")
+        end_date_obj = datetime.strptime(selected_end_date, "%d-%B")
+
+        # ✅ Store properly formatted dates
+        if user_id not in user_leaves:
+            user_leaves[user_id] = {}
+        if month not in user_leaves[user_id]:
+            user_leaves[user_id][month] = []
+
+        user_leaves[user_id][month].append((start_date_obj.strftime("%d-%B"), end_date_obj.strftime("%d-%B"), leave_type))
+        logger.info(f"Stored leave for {user_id}: {start_date} to {selected_end_date} ({leave_type})")
+
+        buttons = [
+            [InlineKeyboardButton("Yes, Add More Leaves", callback_data="apply_leave")],
+            [InlineKeyboardButton("No, Generate Timesheet", callback_data="generate_timesheet_after_leave")]
+        ]
+        reply_markup = InlineKeyboardMarkup(buttons)
+        await query.message.reply_text("Do you want to add more leaves?", reply_markup=reply_markup)
+
+    except ValueError as e:
+        logger.error(f"Invalid date format received: {e}")
+        await query.message.reply_text("Error: Selected date format is incorrect. Please try again.")
 
 
 # ✅ Handle Generate Timesheet
@@ -178,23 +218,64 @@ async def generate_timesheet(update: Update, context: ContextTypes.DEFAULT_TYPE)
     month = context.user_data.get("month")
 
     try:
+        if not month:
+            await query.message.reply_text("You must first select a month.")
+            return
+
         logger.info(f"Generating timesheet for user {user_id} for month: {month}")
 
         month_number = datetime.strptime(month, "%B").month
         year = datetime.now().year
-
         leave_data = user_leaves.get(user_id, {}).get(month, [])
 
-        output_file = generate_timesheet_excel(user_id, month_number, year, leave_data)
+        # ✅ Debugging: Print stored leave data before processing
+        logger.info(f"Raw leave_data for user {user_id}: {leave_data}")
+
+        parsed_leave_data = []
+        for leave_entry in leave_data:
+            try:
+                # ✅ Debugging: Print each leave entry before unpacking
+                logger.info(f"Processing leave entry: {leave_entry}")
+
+                # Check tuple length before unpacking
+                if not isinstance(leave_entry, tuple):
+                    raise ValueError(f"Unexpected type for leave_entry: {type(leave_entry)} - {leave_entry}")
+                if len(leave_entry) != 3:
+                    raise ValueError(f"Unexpected leave entry format: {leave_entry}")
+
+                start_date_str, end_date_str, leave_type = leave_entry
+
+                # ✅ Debugging: Print extracted values
+                logger.info(f"Extracted - Start: {start_date_str}, End: {end_date_str}, Type: {leave_type}")
+
+                # ✅ Validate and convert date format
+                start_date_obj = datetime.strptime(start_date_str, "%d-%B").replace(year=year)
+                end_date_obj = datetime.strptime(end_date_str, "%d-%B").replace(year=year)
+
+                parsed_leave_data.append((start_date_obj.strftime("%d-%B"), end_date_obj.strftime("%d-%B"), leave_type))
+
+            except ValueError as e:
+                logger.error(f"Corrupt leave data detected: {leave_entry} - {e}")
+                await query.message.reply_text(f"Error: Corrupt leave data detected. Resetting data.")
+                user_leaves[user_id][month] = []
+                return
+
+        # ✅ Debugging: Print processed leave data before generating timesheet
+        logger.info(f"Final parsed_leave_data: {parsed_leave_data}")
+
+        # ✅ Generate timesheet with correct format
+        output_file = generate_timesheet_excel(user_id, month_number, year, parsed_leave_data)
 
         with open(output_file, "rb") as doc:
             await query.message.reply_document(document=doc, filename=os.path.basename(output_file))
 
-        user_leaves[user_id][month] = []
+        user_leaves[user_id][month] = []  # ✅ Clear only after successful generation
 
     except Exception as e:
         logger.error(f"Error generating timesheet: {e}")
         await query.message.reply_text(f"Error generating timesheet: {e}")
+
+
 
 # ✅ Register Handlers
 def main():
