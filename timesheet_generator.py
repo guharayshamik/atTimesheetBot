@@ -56,6 +56,8 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     light_blue_fill = PatternFill(start_color="D9E1F2", end_color="D9E1F2",
                                   fill_type="solid")  # Light Blue (Annual Leave)
     white_fill = PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid")  # White (Default)
+    red_font = Font(color="FF0000")  # Define red bold font
+    light_red_fill = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
 
     # ✅ Header Section (PO Details)
     ws["A1"], ws["B1"] = "Description", description
@@ -214,10 +216,10 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
             if col_num in [3, 4, 5, 6, 7]:  # At Work, Public Holiday, Sick Leave, Childcare Leave, Annual Leave
                 cell.fill = yellow_fill if value not in ["", "-"] else white_fill
 
-            # ✅ Highlight Remarks for Public Holidays & Leaves
+            # ✅ Highlight Remarks for Public Holidays & Leaves | remove redudant  code
             if col_num == 8 and remark_display not in ["-", ""]:
-                cell.fill = light_yellow_fill
-                cell.font = bold_font
+                cell.fill = light_red_fill
+            #   cell.font = bold_font
 
         # ✅ Apply Yellow Fill for At Work, Sick Leave, Childcare Leave, and Annual Leave up to row 31
         for row in range(11, 42):  # Assuming row 11 is the first data row, row 41 is the last (31st day)
@@ -232,6 +234,13 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
                                 7]:  # Columns: At Work (C), Sick Leave (E), Childcare Leave (F), Annual Leave (G)
                     cell = ws.cell(row=row, column=col_num)
                     cell.alignment = right_alignment
+
+        # ✅ Code to Apply Red Font & Right Alignment to Remarks (Rows 1-42)
+        for row in range(11, 53):  # Adjusting for row range from 11 to 42 (inclusive)
+            cell = ws.cell(row=row, column=8)  # Column 8 is "Remarks"
+            if cell.value not in ["-", ""]:  # Apply styles only to meaningful values
+                cell.font = red_font
+                cell.alignment = right_alignment  # Apply right alignment
 
 
         current_row += 1
@@ -249,6 +258,7 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     ws[f"A{current_row}"] = "Total"
     ws[f"A{current_row}"].font = bold_font
     ws[f"A{current_row}"].alignment = center_alignment
+
 #Total cells vlaues changed
     #for col_num, key in enumerate(totals.keys(), 3):
     #    total_value = totals[key]
