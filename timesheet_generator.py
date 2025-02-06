@@ -48,7 +48,6 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     center_alignment = Alignment(horizontal="center", vertical="center")
 
     # ✅ Header Section (PO Details)
-    # ✅ Header Section (PO Details)
     ws["A1"], ws["B1"] = "Description", description
     ws["A2"], ws["B2"] = "PO Ref", po_ref
     ws["A3"], ws["B3"] = "PO Date", po_date
@@ -77,7 +76,7 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     # ✅ Table Headers
     headers = ["SN", "Date", "At Work", "Public Holiday", "Sick Leave", "Childcare Leave", "Annual Leave", "Remarks"]
     for col_num, header in enumerate(headers, 1):
-        cell = ws.cell(row=9, column=col_num, value=header)
+        cell = ws.cell(row=10, column=col_num, value=header)
         cell.fill = yellow_fill
         cell.font = bold_font
         cell.alignment = center_alignment
@@ -98,7 +97,7 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
             expanded_leave_details.append(leave_entry)
 
     # ✅ **Data Rows**
-    current_row = 10
+    current_row = 11
     _, days_in_month = monthrange(year, month)
     totals = {"At Work": 0, "Public Holiday": 0, "Sick Leave": 0, "Childcare Leave": 0, "Annual Leave": 0}
 
@@ -151,7 +150,7 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
         totals["Annual Leave"] += annual_leave
 
         # ✅ **Insert Data**
-        row_data = [current_row - 9, formatted_date, at_work, public_holiday, sick_leave, childcare_leave, annual_leave, remark]
+        row_data = [current_row - 10, formatted_date, at_work, public_holiday, sick_leave, childcare_leave, annual_leave, remark]
         for col_num, value in enumerate(row_data, 1):
             cell = ws.cell(row=current_row, column=col_num, value=value)
             cell.alignment = center_alignment
@@ -161,13 +160,14 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
 
 
         current_row += 1
-
+    current_row += 2
     # ✅ **Totals Row**
     ws[f"A{current_row}"] = "Total"
     ws[f"A{current_row}"].font = bold_font
+
     for col_num, key in enumerate(totals.keys(), 3):
         ws.cell(row=current_row, column=col_num, value=totals[key]).font = bold_font
-
+    current_row += 2 # Add an extra space
     # ✅ **Signature Section**
     current_date = datetime.now().strftime("%d - %B - %Y")
     ws[f"A{current_row + 2}"] = "Officer"
@@ -177,12 +177,19 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     ws[f"A{current_row + 4}"] = "Date"
     ws[f"B{current_row + 4}"] = current_date
 
-    ws[f"D{current_row + 2}"] = "Reporting Officer"
-    ws[f"E{current_row + 2}"] = reporting_officer
-    ws[f"D{current_row + 3}"] = "Signature"
-    ws[f"E{current_row + 3}"] = ""  # ✅ Leave Empty for Manager
-    ws[f"D{current_row + 4}"] = "Date"
-    ws[f"E{current_row + 4}"] = ""  # ✅ Leave Empty for Manager
+   # ws[f"D{current_row + 2}"] = "Reporting Officer"
+   # ws[f"E{current_row + 2}"] = reporting_officer
+   # ws[f"D{current_row + 3}"] = "Signature"
+   # ws[f"E{current_row + 3}"] = ""  # ✅ Leave Empty for Manager
+   # ws[f"D{current_row + 4}"] = "Date"
+   # ws[f"E{current_row + 4}"] = ""  # ✅ Leave Empty for Manager
+
+    ws[f"A{current_row + 6}"] = "Reporting Officer"
+    ws[f"B{current_row + 6}"] = reporting_officer
+    ws[f"A{current_row + 7}"] = "Signature"
+    ws[f"B{current_row + 7}"] = ""  # ✅ Leave Empty for Manager
+    ws[f"A{current_row + 8}"] = "Date"
+    ws[f"B{current_row + 8}"] = ""  # ✅ Leave Empty for Manager
 
     # ✅ **Save File**
     wb.save(output_file)
