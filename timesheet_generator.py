@@ -47,6 +47,7 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     yellow_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
     bold_font = Font(bold=True)
     center_alignment = Alignment(horizontal="center", vertical="center")
+    right_alignment = Alignment(horizontal="right", vertical="center")
     light_green_fill = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")  # Light Green (At Work)
     lighter_green_fill = PatternFill(start_color="E2EFDA", end_color="E2EFDA",
                                      fill_type="solid")  # Lighter Green (Sick Leave)
@@ -63,13 +64,35 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     ws["D1"], ws["E1"] = "Month/Year", f"{month_name} - {year}"
     ws["D2"], ws["E2"] = "Contractor", contractor
 
-    # ✅ Apply Yellow Fill to Static Cells in Column B (Second Column)
-    for row in [1, 2, 3]:  # Update this list to include row 2
-        ws[f"B{row}"].fill = yellow_fill
+    # ✅ Apply Borders for Header Sections
+    for row in range(1, 4):
+        for col in ["A", "B"]:
+            ws[f"{col}{row}"].border = thin_border  # Description to PO Date
+    for row in range(1, 3):
+        for col in ["D", "E"]:
+            ws[f"{col}{row}"].border = thin_border  # Month/Year to Contractor
 
-    # ✅ Apply Yellow Fill to Static Cells in Column E (Fifth Column)
-    for row in [1]:  # Update this list to include row 1
-        ws[f"E{row}"].fill = yellow_fill
+    # ✅ Apply Yellow Fill and Center Alignment to Static Cells in Column B (Second Column)
+    for row in [1, 2, 3]:  # Rows to be highlighted in Column B
+        cell = ws[f"B{row}"]
+        cell.fill = yellow_fill
+        cell.alignment = center_alignment  # Corrected alignment syntax
+
+    # ✅ Apply Yellow Fill and Center Alignment to Static Cells in Column E1 (Fifth Column)
+    for row in [1]:  # Rows to be highlighted in Column E
+        cell = ws[f"E{row}"]
+        cell.fill = yellow_fill
+        cell.alignment = center_alignment  # Corrected alignment syntax
+
+    # ✅ Apply Yellow Fill and Center Alignment to Static Cells in Column E2
+    for row in [2]:  # Rows to be highlighted in Column E
+        cell = ws[f"E{row}"]
+        cell.alignment = center_alignment  # Corrected alignment syntax
+
+    # ✅ Apply Yellow Fill and Center Alignment to Static Cells in Column E6
+    for row in [6]:  # Rows to be highlighted in Column E
+        cell = ws[f"E{row}"]
+        cell.alignment = center_alignment  # Corrected alignment syntax
 
     # ✅ User Details
     ws["A6"], ws["B6"] = "Name", name
@@ -78,9 +101,16 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     ws["A8"], ws["B8"] = "Group/Specialization", group_specialization
 
     # ✅ Apply Yellow Fill to Static Cells in Columns B & E
-    static_fields = ["B6", "B7", "B8", "E6", "E7", "E8"]  # Include all necessary fields
+    static_fields = ["B6", "B7", "B8", "E6"]  # Include all necessary fields
     for cell in static_fields:
         ws[cell].fill = yellow_fill
+
+        # ✅ Apply Borders for User Details
+        for row in range(6, 9):
+            for col in ["A", "B"]:
+                ws[f"{col}{row}"].border = thin_border  # Name to Group
+        ws["D6"].border = thin_border  # Skill Level Label
+        ws["E6"].border = thin_border  # Skill Level Value
 
     # ✅ Table Headers
     headers = ["SN", "Date", "At Work", "Public Holiday", "Sick Leave", "Childcare Leave", "Annual Leave", "Remarks"]
@@ -189,6 +219,21 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
                 cell.fill = light_yellow_fill
                 cell.font = bold_font
 
+        # ✅ Apply Yellow Fill for At Work, Sick Leave, Childcare Leave, and Annual Leave up to row 31
+        for row in range(11, 42):  # Assuming row 11 is the first data row, row 41 is the last (31st day)
+            for col_num in [3, 5, 6,
+                                7]:  # Columns: At Work (C), Sick Leave (E), Childcare Leave (F), Annual Leave (G)
+                    cell = ws.cell(row=row, column=col_num)
+                    cell.fill = yellow_fill
+
+        # ✅ Apply right aligned for At Work, Public Holiday, Sick Leave, Childcare Leave, and Annual Leave up to row 31
+        for row in range(11, 42):  # Assuming row 11 is the first data row, row 41 is the last (31st day)
+            for col_num in [3, 4, 5, 6,
+                                7]:  # Columns: At Work (C), Sick Leave (E), Childcare Leave (F), Annual Leave (G)
+                    cell = ws.cell(row=row, column=col_num)
+                    cell.alignment = right_alignment
+
+
         current_row += 1
 
     # ✅ **Totals Row**
@@ -203,11 +248,18 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     current_row += 2
     ws[f"A{current_row}"] = "Total"
     ws[f"A{current_row}"].font = bold_font
-
+    ws[f"A{current_row}"].alignment = center_alignment
+#Total cells vlaues changed
+    #for col_num, key in enumerate(totals.keys(), 3):
+    #    total_value = totals[key]
+    #    display_total = "-" if total_value == 0.0 else f"{total_value:.1f}"  # Show "-" if total is zero
+    #    ws.cell(row=current_row, column=col_num, value=display_total).font = bold_font
     for col_num, key in enumerate(totals.keys(), 3):
         total_value = totals[key]
         display_total = "-" if total_value == 0.0 else f"{total_value:.1f}"  # Show "-" if total is zero
-        ws.cell(row=current_row, column=col_num, value=display_total).font = bold_font
+        cell = ws.cell(row=current_row, column=col_num, value=display_total)
+        cell.font = bold_font
+        cell.alignment = right_alignment  # Apply right alignment
 
     current_row += 2 # Add an extra space
     # ✅ **Signature Section**
@@ -233,7 +285,10 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     ws[f"A{current_row + 8}"] = "Date"
     ws[f"B{current_row + 8}"] = ""  # ✅ Leave Empty for Manager
 
-    # ✅ **Save File**
+    for row in [current_row + 2, current_row + 3, current_row + 4, current_row + 6]:
+        ws[f"B{row}"].alignment = center_alignment
+
+        # ✅ **Save File**
     wb.save(output_file)
     print(f"Timesheet saved -> {output_file}")
     return output_file
