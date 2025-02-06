@@ -58,6 +58,7 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     white_fill = PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid")  # White (Default)
     red_font = Font(color="FF0000")  # Define red bold font
     light_red_fill = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
+    black_font = Font(color="000000")  # Define black font (default)
 
     # ✅ Header Section (PO Details)
     ws["A1"], ws["B1"] = "Description", description
@@ -241,6 +242,9 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
             if cell.value not in ["-", ""]:  # Apply styles only to meaningful values
                 cell.font = red_font
                 cell.alignment = right_alignment  # Apply right alignment
+            else:  # If the value is "-", keep it black
+                cell.font = black_font
+                cell.alignment = right_alignment
 
 
         current_row += 1
