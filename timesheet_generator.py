@@ -10,6 +10,7 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
 
     # ✅ Debug: Print Public Holidays for Verification
     print("Public Holidays Loaded:", PUBLIC_HOLIDAYS)
+    print("User details Loaded:", USER_DETAILS)
 
     # ✅ Fetch User Details
     user_details = USER_DETAILS.get(user_id)
@@ -111,48 +112,45 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     # ✅ **Data Rows**
     current_row = 11
     _, days_in_month = monthrange(year, month)
-    totals = {"At Work": 0, "Public Holiday": 0, "Sick Leave": 0, "Childcare Leave": 0, "Annual Leave": 0}
+    totals = {"At Work": 0.0, "Public Holiday": 0.0, "Sick Leave": 0.0, "Childcare Leave": 0.0, "Annual Leave": 0.0}
 
     for day in range(1, days_in_month + 1):
         date_obj = datetime(year, month, day)
-        formatted_date = date_obj.strftime("%Y-%m-%d")  # Ensure public holiday format matches
+        formatted_date = date_obj.strftime("%d-%B-%Y")  # Display format
+        public_holiday_check = date_obj.strftime("%Y-%m-%d")  # Match keys in PUBLIC_HOLIDAYS
         weekday = date_obj.weekday()
 
-        # ✅ Debug: Print each date processed
-        print(f"Processing Date: {formatted_date}")
-
-        # Default Values
-        at_work, public_holiday, sick_leave, childcare_leave, annual_leave = 1.0, 0, 0, 0, 0
-        remark = ""
+        # ✅ Default Values as Floats
+        at_work, public_holiday, sick_leave, childcare_leave, annual_leave = 1.0, 0.0, 0.0, 0.0, 0.0
+        remark = "-"  # Default empty remark
 
         # ✅ **Handle Weekends**
         if weekday == 5:
-            at_work = 0
+            at_work = 0.0
             remark = "Saturday"
         elif weekday == 6:
-            at_work = 0
+            at_work = 0.0
             remark = "Sunday"
 
-        # ✅ **Handle Public Holidays**
-        if formatted_date in PUBLIC_HOLIDAYS:
-            print(f"📌 Found Public Holiday on {formatted_date}: {PUBLIC_HOLIDAYS[formatted_date]}")
-            at_work = 0
+        # ✅ **Handle Public Holidays (Fixed)**
+        if public_holiday_check in PUBLIC_HOLIDAYS:
+            print(f"📌 Public Holiday Found: {public_holiday_check} - {PUBLIC_HOLIDAYS[public_holiday_check]}")
+            at_work = 0.0
             public_holiday = 1.0
-            remark = PUBLIC_HOLIDAYS[formatted_date]
+            remark = PUBLIC_HOLIDAYS[public_holiday_check]  # Now shows "New Year's Day", "Labor Day", etc.
 
-        # ✅ **Handle User Leaves**
-        if formatted_date not in PUBLIC_HOLIDAYS and remark not in ["Saturday", "Sunday"]:
-            for leave_date, leave_type in expanded_leave_details:
-                if leave_date == formatted_date:
-                    print(f"📌 Found Leave on {formatted_date}: {leave_type}")
-                    at_work = 0
-                    if leave_type == "Sick Leave":
-                        sick_leave = 1.0
-                    elif leave_type == "Childcare Leave":
-                        childcare_leave = 1.0
-                    elif leave_type == "Annual Leave":
-                        annual_leave = 1.0
-                    remark = leave_type
+        # ✅ **Handle User Leaves (Fixed)**
+        for leave_date, leave_type in expanded_leave_details:
+            if leave_date == public_holiday_check:
+                print(f"📌 Leave Found: {leave_date} - {leave_type}")
+                at_work = 0.0  # Ensure work is set to 0.0
+                if leave_type == "Sick Leave":
+                    sick_leave = 1.0
+                elif leave_type == "Childcare Leave":
+                    childcare_leave = 1.0
+                elif leave_type == "Annual Leave":
+                    annual_leave = 1.0
+                remark = leave_type  # Now correctly displays leave type
 
         # ✅ **Update Totals**
         totals["At Work"] += at_work
@@ -161,24 +159,48 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
         totals["Childcare Leave"] += childcare_leave
         totals["Annual Leave"] += annual_leave
 
+        # ✅ **Ensure "-" for Empty Cells**
+        public_holiday_display = "-" if public_holiday == 0.0 else f"{public_holiday:.1f}"
+        remark_display = remark if remark else "-"
+
         # ✅ **Insert Data**
-        row_data = [current_row - 10, formatted_date, at_work, public_holiday, sick_leave, childcare_leave, annual_leave, remark]
+        row_data = [current_row - 10, formatted_date, f"{at_work:.1f}", public_holiday_display, f"{sick_leave:.1f}",
+                    f"{childcare_leave:.1f}", f"{annual_leave:.1f}", remark_display]
+
         for col_num, value in enumerate(row_data, 1):
             cell = ws.cell(row=current_row, column=col_num, value=value)
             cell.alignment = center_alignment
             cell.border = thin_border
-            if value == 1 or remark:
-                cell.fill = yellow_fill  # Highlight leave & public holiday cells
 
+            # ✅ **Highlight Cells for Leave & Public Holidays**
+            if col_num in [3, 4, 5, 6, 7]:  # Apply styles for At Work & Leave columns
+                cell.fill = yellow_fill if value != "-" else white_fill
+
+            # ✅ **Highlight Remarks Column for Public Holidays & Leaves**
+            if col_num == 8 and remark_display not in ["-", ""]:
+                cell.fill = light_yellow_fill
+                cell.font = bold_font
 
         current_row += 1
-    current_row += 2
+
     # ✅ **Totals Row**
+    #current_row += 2
+    #ws[f"A{current_row}"] = "Total"
+    #ws[f"A{current_row}"].font = bold_font
+#
+    #for col_num, key in enumerate(totals.keys(), 3):
+    #    ws.cell(row=current_row, column=col_num,
+    #            value=f"{totals[key]:.1f}").font = bold_font  # Ensure total is float (e.g., 19.0)
+
+    current_row += 2
     ws[f"A{current_row}"] = "Total"
     ws[f"A{current_row}"].font = bold_font
 
     for col_num, key in enumerate(totals.keys(), 3):
-        ws.cell(row=current_row, column=col_num, value=totals[key]).font = bold_font
+        total_value = totals[key]
+        display_total = "-" if total_value == 0.0 else f"{total_value:.1f}"  # Show "-" for zero totals
+        ws.cell(row=current_row, column=col_num, value=display_total).font = bold_font
+
     current_row += 2 # Add an extra space
     # ✅ **Signature Section**
     current_date = datetime.now().strftime("%d - %B - %Y")
