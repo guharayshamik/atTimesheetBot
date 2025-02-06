@@ -164,19 +164,27 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
         remark_display = remark if remark else "-"
 
         # ✅ **Insert Data**
-        row_data = [current_row - 10, formatted_date, f"{at_work:.1f}", public_holiday_display, f"{sick_leave:.1f}",
-                    f"{childcare_leave:.1f}", f"{annual_leave:.1f}", remark_display]
+        row_data = [
+            current_row - 10,
+            formatted_date,
+            "" if at_work == 0.0 else f"{at_work:.1f}",
+            public_holiday_display,  # Keep public holiday column unchanged
+            "" if sick_leave == 0.0 else f"{sick_leave:.1f}",
+            "" if childcare_leave == 0.0 else f"{childcare_leave:.1f}",
+            "" if annual_leave == 0.0 else f"{annual_leave:.1f}",
+            remark_display
+        ]
 
         for col_num, value in enumerate(row_data, 1):
             cell = ws.cell(row=current_row, column=col_num, value=value)
             cell.alignment = center_alignment
             cell.border = thin_border
 
-            # ✅ **Highlight Cells for Leave & Public Holidays**
-            if col_num in [3, 4, 5, 6, 7]:  # Apply styles for At Work & Leave columns
-                cell.fill = yellow_fill if value != "-" else white_fill
+            # ✅ Highlight Leave & Public Holiday Cells
+            if col_num in [3, 4, 5, 6, 7]:  # At Work, Public Holiday, Sick Leave, Childcare Leave, Annual Leave
+                cell.fill = yellow_fill if value not in ["", "-"] else white_fill
 
-            # ✅ **Highlight Remarks Column for Public Holidays & Leaves**
+            # ✅ Highlight Remarks for Public Holidays & Leaves
             if col_num == 8 and remark_display not in ["-", ""]:
                 cell.fill = light_yellow_fill
                 cell.font = bold_font
@@ -198,7 +206,7 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
 
     for col_num, key in enumerate(totals.keys(), 3):
         total_value = totals[key]
-        display_total = "-" if total_value == 0.0 else f"{total_value:.1f}"  # Show "-" for zero totals
+        display_total = "-" if total_value == 0.0 else f"{total_value:.1f}"  # Show "-" if total is zero
         ws.cell(row=current_row, column=col_num, value=display_total).font = bold_font
 
     current_row += 2 # Add an extra space
