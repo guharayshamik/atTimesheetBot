@@ -171,19 +171,21 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
             at_work = 0.0
             public_holiday = 1.0
             remark = PUBLIC_HOLIDAYS[public_holiday_check]  # Now shows "New Year's Day", "Labor Day", etc.
+#
+        # ✅ **Handle User Leaves (Fixed)** REMOVED this for now
+        #for leave_date, leave_type in expanded_leave_details:
+        #    if leave_date == public_holiday_check:
+        #        print(f"📌 Leave Found: {leave_date} - {leave_type}")
+        #        at_work = 0.0  # Ensure work is set to 0.0
+        #        if leave_type == "Sick Leave":
+        #            sick_leave = 1.0
+        #        elif leave_type == "Childcare Leave":
+        #            childcare_leave = 1.0
+        #        elif leave_type == "Annual Leave":
+        #            annual_leave = 1.0
+        #        remark = leave_type  # Now correctly displays leave type
 
-        # ✅ **Handle User Leaves (Fixed)**
-        for leave_date, leave_type in expanded_leave_details:
-            if leave_date == public_holiday_check:
-                print(f"📌 Leave Found: {leave_date} - {leave_type}")
-                at_work = 0.0  # Ensure work is set to 0.0
-                if leave_type == "Sick Leave":
-                    sick_leave = 1.0
-                elif leave_type == "Childcare Leave":
-                    childcare_leave = 1.0
-                elif leave_type == "Annual Leave":
-                    annual_leave = 1.0
-                remark = leave_type  # Now correctly displays leave type
+
 
         # ✅ **Update Totals**
         totals["At Work"] += at_work
