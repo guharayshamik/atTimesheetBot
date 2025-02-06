@@ -135,17 +135,18 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
             remark = PUBLIC_HOLIDAYS[formatted_date]
 
         # ✅ **Handle User Leaves**
-        for leave_date, leave_type in expanded_leave_details:
-            if leave_date == formatted_date:
-                print(f"📌 Found Leave on {formatted_date}: {leave_type}")
-                at_work = 0
-                if leave_type == "Sick Leave":
-                    sick_leave = 1
-                elif leave_type == "Childcare Leave":
-                    childcare_leave = 1
-                elif leave_type == "Annual Leave":
-                    annual_leave = 1
-                remark = leave_type
+        if formatted_date not in PUBLIC_HOLIDAYS and remark not in ["Saturday", "Sunday"]:
+            for leave_date, leave_type in expanded_leave_details:
+                if leave_date == formatted_date:
+                    print(f"📌 Found Leave on {formatted_date}: {leave_type}")
+                    at_work = 0
+                    if leave_type == "Sick Leave":
+                        sick_leave = 1
+                    elif leave_type == "Childcare Leave":
+                        childcare_leave = 1
+                    elif leave_type == "Annual Leave":
+                        annual_leave = 1
+                    remark = leave_type
 
         # ✅ **Update Totals**
         totals["At Work"] += at_work
