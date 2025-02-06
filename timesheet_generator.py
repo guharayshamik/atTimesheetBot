@@ -48,36 +48,31 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     center_alignment = Alignment(horizontal="center", vertical="center")
 
     # ✅ Header Section (PO Details)
-    ws["A1"] = "Description"
-    ws["B1"] = description
-    ws["B1"].fill = yellow_fill
-    ws["A3"] = "PO Ref"
-    ws["B3"] = po_ref
-    ws["B3"].fill = yellow_fill
-    ws["A4"] = "PO Date"
-    ws["B4"] = po_date
-    ws["B4"].fill = yellow_fill
+    # ✅ Header Section (PO Details)
+    ws["A1"], ws["B1"] = "Description", description
+    ws["A2"], ws["B2"] = "PO Ref", po_ref
+    ws["A3"], ws["B3"] = "PO Date", po_date
+    ws["D1"], ws["E1"] = "Month/Year", f"{month_name} - {year}"
+    ws["D2"], ws["E2"] = "Contractor", contractor
 
-    ws["D1"] = "Month/Year"
-    ws["E1"] = f"{month_name} - {year}"
-    ws["E1"].fill = yellow_fill
-    ws["D3"] = "Contractor"
-    ws["E3"] = contractor
-    ws["E3"].fill = yellow_fill
+    # ✅ Apply Yellow Fill to Static Cells in Column B (Second Column)
+    for row in [1, 2, 3]:  # Update this list to include row 2
+        ws[f"B{row}"].fill = yellow_fill
+
+    # ✅ Apply Yellow Fill to Static Cells in Column E (Fifth Column)
+    for row in [1, 2]:  # Update this list to include row 2
+        ws[f"E{row}"].fill = yellow_fill
 
     # ✅ User Details
-    ws["A6"] = "Name"
-    ws["B6"] = name
-    ws["B6"].fill = yellow_fill
-    ws["D6"] = "Skill Level"
-    ws["E6"] = skill_level
-    ws["E6"].fill = yellow_fill
-    ws["A7"] = "Role Specialization"
-    ws["B7"] = role_specialization
-    ws["B7"].fill = yellow_fill
-    ws["D7"] = "Group/Specialization"
-    ws["E7"] = group_specialization
-    ws["E7"].fill = yellow_fill
+    ws["A6"], ws["B6"] = "Name", name
+    ws["D6"], ws["E6"] = "Skill Level", skill_level
+    ws["A7"], ws["B7"] = "Role Specialization", role_specialization
+    ws["A8"], ws["B8"] = "Group/Specialization", group_specialization
+
+    # ✅ Apply Yellow Fill to Static Cells in Columns B & E
+    static_fields = ["B6", "B7", "B8", "E6", "E7", "E8"]  # Include all necessary fields
+    for cell in static_fields:
+        ws[cell].fill = yellow_fill
 
     # ✅ Table Headers
     headers = ["SN", "Date", "At Work", "Public Holiday", "Sick Leave", "Childcare Leave", "Annual Leave", "Remarks"]
