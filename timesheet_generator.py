@@ -40,12 +40,20 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     ws = wb.active
     ws.title = f"{month_name} {year} Timesheet"
 
-    # ✅ Styles
+    # ✅ Styles and Colors
     thin_border = Border(left=Side(style="thin"), right=Side(style="thin"),
                          top=Side(style="thin"), bottom=Side(style="thin"))
     yellow_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
     bold_font = Font(bold=True)
     center_alignment = Alignment(horizontal="center", vertical="center")
+    light_green_fill = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")  # Light Green (At Work)
+    lighter_green_fill = PatternFill(start_color="E2EFDA", end_color="E2EFDA",
+                                     fill_type="solid")  # Lighter Green (Sick Leave)
+    light_yellow_fill = PatternFill(start_color="FFF2CC", end_color="FFF2CC",
+                                    fill_type="solid")  # Light Yellow (Public Holiday)
+    light_blue_fill = PatternFill(start_color="D9E1F2", end_color="D9E1F2",
+                                  fill_type="solid")  # Light Blue (Annual Leave)
+    white_fill = PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid")  # White (Default)
 
     # ✅ Header Section (PO Details)
     ws["A1"], ws["B1"] = "Description", description
@@ -59,7 +67,7 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
         ws[f"B{row}"].fill = yellow_fill
 
     # ✅ Apply Yellow Fill to Static Cells in Column E (Fifth Column)
-    for row in [1, 2]:  # Update this list to include row 2
+    for row in [1]:  # Update this list to include row 1
         ws[f"E{row}"].fill = yellow_fill
 
     # ✅ User Details
@@ -75,12 +83,16 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
 
     # ✅ Table Headers
     headers = ["SN", "Date", "At Work", "Public Holiday", "Sick Leave", "Childcare Leave", "Annual Leave", "Remarks"]
-    for col_num, header in enumerate(headers, 1):
+    header_fills = [white_fill, white_fill, light_green_fill, light_yellow_fill, lighter_green_fill, white_fill,
+                    light_blue_fill, white_fill]  # Corresponding fill colors
+
+    for col_num, (header, fill) in enumerate(zip(headers, header_fills), 1):
         cell = ws.cell(row=10, column=col_num, value=header)
-        cell.fill = yellow_fill
-        cell.font = bold_font
-        cell.alignment = center_alignment
-        cell.border = thin_border
+        cell.font = Font(bold=True, color="000000")  # Bold font with black text
+        cell.alignment = Alignment(horizontal="center", vertical="center")  # Center alignment
+        cell.border = Border(bottom=Side(style="medium"))  # Apply bottom border
+        cell.border = thin_border  # Apply thin border
+        cell.fill = fill  # Apply the respective color
 
     # ✅ **Expand Leave Data**
     expanded_leave_details = []
@@ -110,7 +122,7 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
         print(f"Processing Date: {formatted_date}")
 
         # Default Values
-        at_work, public_holiday, sick_leave, childcare_leave, annual_leave = 1, 0, 0, 0, 0
+        at_work, public_holiday, sick_leave, childcare_leave, annual_leave = 1.0, 0, 0, 0, 0
         remark = ""
 
         # ✅ **Handle Weekends**
@@ -125,7 +137,7 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
         if formatted_date in PUBLIC_HOLIDAYS:
             print(f"📌 Found Public Holiday on {formatted_date}: {PUBLIC_HOLIDAYS[formatted_date]}")
             at_work = 0
-            public_holiday = 1
+            public_holiday = 1.0
             remark = PUBLIC_HOLIDAYS[formatted_date]
 
         # ✅ **Handle User Leaves**
@@ -135,11 +147,11 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
                     print(f"📌 Found Leave on {formatted_date}: {leave_type}")
                     at_work = 0
                     if leave_type == "Sick Leave":
-                        sick_leave = 1
+                        sick_leave = 1.0
                     elif leave_type == "Childcare Leave":
-                        childcare_leave = 1
+                        childcare_leave = 1.0
                     elif leave_type == "Annual Leave":
-                        annual_leave = 1
+                        annual_leave = 1.0
                     remark = leave_type
 
         # ✅ **Update Totals**
