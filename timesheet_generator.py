@@ -3,7 +3,7 @@ from openpyxl.styles import Alignment, PatternFill, Font, Border, Side
 from datetime import datetime, timedelta
 from calendar import monthrange
 import os
-from utils.utils import PUBLIC_HOLIDAYS, USER_DETAILS
+from utils.utils import PUBLIC_HOLIDAYS, load_user_details  # ✅ Import function instead of USER_DETAILS
 from styles import (  # Import styles from styles.py
     thin_border, white_fill, yellow_fill, light_green_fill, lighter_green_fill, light_yellow_fill, light_blue_fill,
     light_red_fill, bold_font, red_font, black_font, center_alignment, right_alignment
@@ -11,6 +11,9 @@ from styles import (  # Import styles from styles.py
 
 def generate_timesheet_excel(user_id, month, year, leave_details):
     print(f"Generating timesheet for User ID: {user_id}, Month: {month}, Year: {year}")
+
+    # ✅ Fetch Latest User Details
+    USER_DETAILS = load_user_details()  # ✅ Ensures it fetches the latest data
 
     # ✅ Debug: Print Public Holidays for Verification
     print("Public Holidays Loaded:", PUBLIC_HOLIDAYS)

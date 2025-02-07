@@ -1,37 +1,17 @@
-import json
 import logging
 from telegram import Update
 from telegram.ext import ContextTypes
-
-# ✅ File to store user details
-USER_DATA_FILE = "config/user_details.json"
-
-# ✅ Declare global USER_DETAILS before usage
-USER_DETAILS = {}
-
-# ✅ Load user details from JSON
-def load_user_details():
-    global USER_DETAILS  # Declare it as global before modifying
-    try:
-        with open(USER_DATA_FILE, "r") as f:
-            USER_DETAILS = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        USER_DETAILS = {}
-
-# ✅ Save user data to JSON
-def save_user_data():
-    with open(USER_DATA_FILE, "w") as f:
-        json.dump(USER_DETAILS, f, indent=4)
-
-# ✅ Initialize user details on script start
-load_user_details()
+from utils.utils import load_user_details, save_user_data  # ✅ Import functions from utils
 
 # ✅ Function to register a new user
 async def register_new_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
 
-    if user_id in USER_DETAILS:
-        return  # User already exists
+    # ✅ Reload USER_DETAILS dynamically
+    user_details = load_user_details()
+
+    if user_id in user_details:
+        return  # ✅ User already exists, no need to register again
 
     await update.message.reply_text("Welcome! Please enter your full name:")
     context.user_data["registration_step"] = "name"
@@ -41,6 +21,13 @@ async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYP
     user_id = str(update.effective_user.id)
     user_message = update.message.text.strip()
     step = context.user_data.get("registration_step")
+
+    if not step:
+        await update.message.reply_text("❌ Registration error. Please type /start to retry.")
+        return
+
+    # ✅ Load latest user details before modifying
+    user_details = load_user_details()
 
     if step == "name":
         context.user_data["name"] = user_message
@@ -85,8 +72,8 @@ async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYP
     elif step == "reporting_officer":
         context.user_data["reporting_officer"] = user_message
 
-        # ✅ Save User Data
-        USER_DETAILS[user_id] = {
+        # ✅ Save user data with all captured details
+        user_details[user_id] = {
             "name": context.user_data["name"],
             "skill_level": context.user_data["skill_level"],
             "role_specialization": context.user_data["role_specialization"],
@@ -97,11 +84,8 @@ async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYP
             "description": context.user_data["description"],
             "reporting_officer": context.user_data["reporting_officer"],
         }
-        save_user_data()
+        save_user_data(user_details)  # ✅ Save data without overwriting existing users
 
-        # ✅ Fix: Reload USER_DETAILS after saving
-        load_user_details()
-
-        logging.info(f"User {user_id} completed registration: {USER_DETAILS[user_id]}")
+        logging.info(f"✅ User {user_id} completed registration: {user_details[user_id]}")
 
         await update.message.reply_text("✅ Registration complete! Type /start to begin using the bot.")

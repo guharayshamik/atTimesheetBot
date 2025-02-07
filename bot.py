@@ -9,7 +9,8 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Mess
 from timesheet_generator import generate_timesheet_excel
 from registration import register_new_user, capture_user_details  # Import registration functions
 from telegram.ext import MessageHandler, filters  # ✅ Add MessageHandler and filters
-from utils.utils import USER_DETAILS, load_user_details  # ✅ Import load_user_details
+#from utils.utils import USER_DETAILS, load_user_details  # ✅ Import load_user_details
+from utils.utils import PUBLIC_HOLIDAYS, load_user_details # ✅ Load dynamically
 
 
 
@@ -129,25 +130,46 @@ user_leaves = {}
 #        logger.info(f"New user {user_id} detected. Redirecting to registration.")
 #        await register_new_user(update, context)
 
+#async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+#    user_id = str(update.effective_user.id)
+#
+#    # ✅ Reload user details dynamically
+#    USER_DETAILS = load_user_details()
+#
+#    user_details = USER_DETAILS.get(user_id)
+#
+#    if user_details:
+#        name = user_details["name"]
+#        await update.message.reply_text(f"Welcome back, {name}! Select a month for your timesheet.")
+#    else:
+#        await register_new_user(update, context)  # ✅ Redirect to registration
+#
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
 
-    # ✅ Reload USER_DETAILS dynamically before checking
-    updated_user_details = load_user_details()
+    # ✅ Reload user details dynamically
+    USER_DETAILS = load_user_details()
 
-    if user_id in updated_user_details:  # ✅ Now it always checks the latest data
-        name = updated_user_details[user_id]["name"]
-        buttons = [[InlineKeyboardButton(month, callback_data=f"month_{month}")] for month in [
-            "January", "February", "March", "April", "May", "June",
-            "July", "August", "September", "October", "November", "December"
-        ]]
+    user_details = USER_DETAILS.get(user_id)
+
+    if user_details:
+        name = user_details["name"]
+        buttons = [
+            [InlineKeyboardButton(month, callback_data=f"month_{month}")]
+            for month in [
+                "January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"
+            ]
+        ]
         reply_markup = InlineKeyboardMarkup(buttons)
-        logger.info(f"User {name} ({user_id}) started the bot.")
 
-        await update.message.reply_text(f"Welcome, {name}! Please select the month for the timesheet:", reply_markup=reply_markup)
+        logger.info(f"User {name} ({user_id}) started the bot.")
+        await update.message.reply_text(f"Welcome back, {name}! Select a month for your timesheet:", reply_markup=reply_markup)
+
     else:
         logger.info(f"New user {user_id} detected. Redirecting to registration.")
-        await register_new_user(update, context)
+        await register_new_user(update, context)  # ✅ Redirect to registration
 
 
 # ✅ Handle Month Selection
