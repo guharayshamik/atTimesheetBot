@@ -11,6 +11,8 @@ from registration import register_new_user, capture_user_details  # Import regis
 from telegram.ext import MessageHandler, filters  # ✅ Add MessageHandler and filters
 #from utils.utils import USER_DETAILS, load_user_details  # ✅ Import load_user_details
 from utils.utils import PUBLIC_HOLIDAYS, load_user_details # ✅ Load dynamically
+from registration import register_new_user, capture_user_details, handle_registration_buttons  # ✅ Import the missing function
+
 
 
 
@@ -20,6 +22,9 @@ load_dotenv()
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
+# Configure logging with DEBUG mode
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
 # Get bot token
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -457,6 +462,27 @@ async def generate_timesheet(update: Update, context: ContextTypes.DEFAULT_TYPE)
 #    application.run_polling()
 
 # LATEST main attempt:
+#def main():
+#    application = Application.builder().token(BOT_TOKEN).build()
+#
+#    application.add_handler(CommandHandler("start", start))
+#    application.add_handler(CommandHandler("register", register_new_user))
+#
+#    # ✅ Add MessageHandler to capture user input during registration
+#    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, capture_user_details))
+#
+#    application.add_handler(CallbackQueryHandler(month_handler, pattern="^month_"))
+#    application.add_handler(CallbackQueryHandler(apply_leave, pattern="^apply_leave$"))
+#    application.add_handler(CallbackQueryHandler(leave_type_handler, pattern="^leave_"))
+#    application.add_handler(CallbackQueryHandler(start_date_handler, pattern="^start_date_"))
+#    application.add_handler(CallbackQueryHandler(end_date_handler, pattern="^end_date_"))
+#    application.add_handler(
+#        CallbackQueryHandler(generate_timesheet, pattern="^(generate_timesheet_now|generate_timesheet_after_leave)$"))
+#
+#    application.run_polling()
+
+
+# ✅ Add this to `main()` in bot.py
 def main():
     application = Application.builder().token(BOT_TOKEN).build()
 
@@ -465,6 +491,14 @@ def main():
 
     # ✅ Add MessageHandler to capture user input during registration
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, capture_user_details))
+
+    # ✅ Fix: Add CallbackQueryHandler for handling quick-select buttons
+    #application.add_handler(CallbackQueryHandler(handle_registration_buttons, pattern="^(skill_level|role_specialization|contractor)_"))
+    application.add_handler(
+        CallbackQueryHandler(handle_registration_buttons, pattern="^(skill_level|role_specialization|contractor)_.+"))
+
+    #application.add_handler(
+    #    CallbackQueryHandler(handle_registration_buttons, pattern="^(skill_level|role_specialization|contractor)_.+"))
 
     application.add_handler(CallbackQueryHandler(month_handler, pattern="^month_"))
     application.add_handler(CallbackQueryHandler(apply_leave, pattern="^apply_leave$"))
