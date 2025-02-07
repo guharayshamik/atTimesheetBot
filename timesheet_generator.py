@@ -4,6 +4,10 @@ from datetime import datetime, timedelta
 from calendar import monthrange
 import os
 from utils.utils import PUBLIC_HOLIDAYS, USER_DETAILS
+from styles import (  # Import styles from styles.py
+    thin_border, white_fill, yellow_fill, light_green_fill, lighter_green_fill, light_yellow_fill, light_blue_fill,
+    light_red_fill, bold_font, red_font, black_font, center_alignment, right_alignment
+)
 
 def generate_timesheet_excel(user_id, month, year, leave_details):
     print(f"Generating timesheet for User ID: {user_id}, Month: {month}, Year: {year}")
@@ -41,24 +45,24 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     ws = wb.active
     ws.title = f"{month_name} {year} Timesheet"
 
-    # ✅ Styles and Colors
-    thin_border = Border(left=Side(style="thin"), right=Side(style="thin"),
-                         top=Side(style="thin"), bottom=Side(style="thin"))
-    yellow_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
-    bold_font = Font(bold=True)
-    center_alignment = Alignment(horizontal="center", vertical="center")
-    right_alignment = Alignment(horizontal="right", vertical="center")
-    light_green_fill = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")  # Light Green (At Work)
-    lighter_green_fill = PatternFill(start_color="E2EFDA", end_color="E2EFDA",
-                                     fill_type="solid")  # Lighter Green (Sick Leave)
-    light_yellow_fill = PatternFill(start_color="FFF2CC", end_color="FFF2CC",
-                                    fill_type="solid")  # Light Yellow (Public Holiday)
-    light_blue_fill = PatternFill(start_color="D9E1F2", end_color="D9E1F2",
-                                  fill_type="solid")  # Light Blue (Annual Leave)
-    white_fill = PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid")  # White (Default)
-    red_font = Font(color="FF0000")  # Define red bold font
-    light_red_fill = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
-    black_font = Font(color="000000")  # Define black font (default)
+    # ✅ Styles and Colors --> moved to styles.py
+    #thin_border = Border(left=Side(style="thin"), right=Side(style="thin"),
+    #                     top=Side(style="thin"), bottom=Side(style="thin"))
+    #yellow_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
+    #bold_font = Font(bold=True)
+    #center_alignment = Alignment(horizontal="center", vertical="center")
+    #right_alignment = Alignment(horizontal="right", vertical="center")
+    #light_green_fill = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")  # Light Green (At Work)
+    #lighter_green_fill = PatternFill(start_color="E2EFDA", end_color="E2EFDA",
+    #                                 fill_type="solid")  # Lighter Green (Sick Leave)
+    #light_yellow_fill = PatternFill(start_color="FFF2CC", end_color="FFF2CC",
+    #                                fill_type="solid")  # Light Yellow (Public Holiday)
+    #light_blue_fill = PatternFill(start_color="D9E1F2", end_color="D9E1F2",
+    #                              fill_type="solid")  # Light Blue (Annual Leave)
+    #white_fill = PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid")  # White (Default)
+    #red_font = Font(color="FF0000")  # Define red bold font
+    #light_red_fill = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
+    #black_font = Font(color="000000")  # Define black font (default)
 
     # ✅ Header Section (PO Details)
     ws["A1"], ws["B1"] = "Description", description
@@ -184,8 +188,36 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
         #        elif leave_type == "Annual Leave":
         #            annual_leave = 1.0
         #        remark = leave_type  # Now correctly displays leave type
-
-
+        # ✅ **Handle User Leaves**
+        #for leave_date, leave_type in expanded_leave_details:
+        #    if leave_date == public_holiday_check:
+        #        # ✅ Skip setting leave if it's a holiday or weekend
+        #        continue
+#
+        #    if leave_date == date_obj.strftime("%Y-%m-%d"):
+        #        at_work = 0.0  # Ensure work is set to 0.0
+        #        if leave_type == "Sick Leave":
+        #            sick_leave = 1.0
+        #        elif leave_type == "Childcare Leave":
+        #            childcare_leave = 1.0
+        #        elif leave_type == "Annual Leave":
+        #            annual_leave = 1.0
+        #        remark = leave_type  # Now correctly displays leave type
+        # ✅ **Handle User Leaves**
+        for leave_date, leave_type in expanded_leave_details:
+            #if leave_date == public_holiday_check:
+             # ✅ Skip setting leave if it's a holiday or weekend
+             #       continue
+            if leave_date == date_obj.strftime("%Y-%m-%d"):  # Correct comparison
+                if public_holiday == 0.0 and weekday not in [5, 6]:
+                    at_work = 0.0  # Ensure work is set to 0.0
+                    if leave_type == "Sick Leave" : #and leave_date != public_holiday_check:
+                        sick_leave = 1.0
+                    elif leave_type == "Childcare Leave": # and leave_date != public_holiday_check:
+                        childcare_leave = 1.0
+                    elif leave_type == "Annual Leave" : #and leave_date != public_holiday_check:
+                        annual_leave = 1.0
+                #remark = leave_type  # DONT NEED TO Display leave type in the remarks column
 
         # ✅ **Update Totals**
         totals["At Work"] += at_work
