@@ -2,10 +2,17 @@ import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from utils.utils import load_user_details, save_user_data  # ✅ Import functions from utils
+import re
+
+# ✅ Function to sanitize user input
+def sanitize_input(user_input):
+    """Sanitize user input to prevent injection attacks."""
+    return re.sub(r"[^\w\s-]", "", user_input.strip())[:50]  # Allow only alphanumeric, spaces, and dashes (limit 50 chars)
 
 # ✅ Function to register a new user
 async def register_new_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
+
 
     # ✅ Reload USER_DETAILS dynamically
     user_details = load_user_details()
@@ -16,197 +23,87 @@ async def register_new_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("👋 Welcome! Please enter your full name:")
     context.user_data["registration_step"] = "name"
 
-# ✅ Capture user registration details step-by-step with quick-select buttons
-#async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYPE):
-#    user_id = str(update.effective_user.id)
-#    user_message = update.message.text.strip()
-#    step = context.user_data.get("registration_step")
-#
-#    if not step:
-#        await update.message.reply_text("❌ Registration error. Please type /start to retry.")
-#        return
-#
-#    # ✅ Load latest user details before modifying
-#    user_details = load_user_details()
-#
-#    if step == "name":
-#        context.user_data["name"] = user_message
-#        context.user_data["registration_step"] = "skill_level"
-#
-#        # ✅ Add quick-select buttons for skill level
-#        buttons = [
-#            [InlineKeyboardButton("Beginner", callback_data="skill_level_Beginner")],
-#            [InlineKeyboardButton("Intermediate", callback_data="skill_level_Intermediate")],
-#            [InlineKeyboardButton("Professional", callback_data="skill_level_Professional")],
-#            [InlineKeyboardButton("Expert", callback_data="skill_level_Expert")]
-#        ]
-#        reply_markup = InlineKeyboardMarkup(buttons)
-#
-#        await update.message.reply_text("🔹 Enter your Skill Level or tap a button:", reply_markup=reply_markup)
-#
-#    elif step == "skill_level":
-#        context.user_data["skill_level"] = user_message
-#        context.user_data["registration_step"] = "role_specialization"
-#
-#        # ✅ Add quick-select buttons for role specialization
-#        buttons = [
-#            [InlineKeyboardButton("Software Engineer", callback_data="role_specialization_Software Engineer")],
-#            [InlineKeyboardButton("DevOps Engineer", callback_data="role_specialization_DevOps Engineer")],
-#            [InlineKeyboardButton("Data Scientist", callback_data="role_specialization_Data Scientist")],
-#            [InlineKeyboardButton("Consultant", callback_data="role_specialization_Consultant")]
-#        ]
-#        reply_markup = InlineKeyboardMarkup(buttons)
-#
-#        await update.message.reply_text("💼 Enter your Role Specialization or tap a button:", reply_markup=reply_markup)
-#
-#    elif step == "role_specialization":
-#        context.user_data["role_specialization"] = user_message
-#        context.user_data["registration_step"] = "group_specialization"
-#
-#        await update.message.reply_text("🏢 Enter your Group Specialization (e.g., 'Consulting', 'Tech Support'):")
-#
-#    elif step == "group_specialization":
-#        context.user_data["group_specialization"] = user_message
-#        context.user_data["registration_step"] = "contractor"
-#
-#        # ✅ Add quick-select buttons for contractor
-#        buttons = [
-#            [InlineKeyboardButton("PALO IT", callback_data="contractor_PALO IT")],
-#            [InlineKeyboardButton("Accenture", callback_data="contractor_Accenture")],
-#            [InlineKeyboardButton("Deloitte", callback_data="contractor_Deloitte")],
-#            [InlineKeyboardButton("Freelancer", callback_data="contractor_Freelancer")]
-#        ]
-#        reply_markup = InlineKeyboardMarkup(buttons)
-#
-#        await update.message.reply_text("🔹 Enter your Contractor or tap a button:", reply_markup=reply_markup)
-#
-#    elif step == "contractor":
-#        context.user_data["contractor"] = user_message
-#        context.user_data["registration_step"] = "po_ref"
-#
-#        await update.message.reply_text("📄 Enter your PO Reference Number:")
-#
-#    elif step == "po_ref":
-#        context.user_data["po_ref"] = user_message
-#        context.user_data["registration_step"] = "po_date"
-#
-#        await update.message.reply_text("📅 Enter your PO Date Range (e.g., '1 May 24 - 30 Apr 25'):")
-#
-#    elif step == "po_date":
-#        context.user_data["po_date"] = user_message
-#        context.user_data["registration_step"] = "description"
-#
-#        await update.message.reply_text("📝 Enter your Job Description (e.g., 'Agile Co-Development Services'):")
-#
-#    elif step == "description":
-#        context.user_data["description"] = user_message
-#        context.user_data["registration_step"] = "reporting_officer"
-#
-#        await update.message.reply_text("👤 Enter your Reporting Officer's Name:")
-#
-#    elif step == "reporting_officer":
-#        context.user_data["reporting_officer"] = user_message
-#
-#        # ✅ Save user data with all captured details
-#        user_details[user_id] = {
-#            "name": context.user_data["name"],
-#            "skill_level": context.user_data["skill_level"],
-#            "role_specialization": context.user_data["role_specialization"],
-#            "group_specialization": context.user_data["group_specialization"],
-#            "contractor": context.user_data["contractor"],
-#            "po_ref": context.user_data["po_ref"],
-#            "po_date": context.user_data["po_date"],
-#            "description": context.user_data["description"],
-#            "reporting_officer": context.user_data["reporting_officer"],
-#        }
-#        save_user_data(user_details)  # ✅ Save data without overwriting existing users
-#
-#        logging.info(f"✅ User {user_id} completed registration: {user_details[user_id]}")
-#
-#        await update.message.reply_text("✅ Registration complete! Type /start to begin using the bot.")
-#
 
-#async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYPE):
-#    user_id = str(update.effective_user.id)
-#    user_message = update.message.text.strip()
-#    step = context.user_data.get("registration_step")
+# async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYPE):
+#     user_id = str(update.effective_user.id)
+#     user_message = update.message.text.strip()
+#     step = context.user_data.get("registration_step")
 #
-#    if not step:
-#        await update.message.reply_text("❌ Registration error. Please type /start to retry.")
-#        return
+#     if not step:
+#         await update.message.reply_text("❌ Registration error. Please type /start to retry.")
+#         return
 #
-#    # ✅ Load latest user details before modifying
-#    user_details = load_user_details()
+#     # ✅ Load latest user details before modifying
+#     user_details = load_user_details()
 #
-#    # ✅ Ensure user exists before modifying
-#    if user_id not in user_details:
-#        user_details[user_id] = {}
+#     # ✅ Ensure user exists before modifying
+#     if user_id not in user_details:
+#         user_details[user_id] = {}
 #
-#    if step == "name":
-#        user_details[user_id]["name"] = user_message  # ✅ Save immediately
-#        context.user_data["registration_step"] = "skill_level"
-#        save_user_data(user_details)  # ✅ Save data to JSON
+#     if step == "name":
+#         user_details[user_id]["name"] = user_message  # ✅ Save immediately
+#         context.user_data["registration_step"] = "skill_level"
+#         save_user_data(user_details)  # ✅ Save data to JSON
 #
-#        # ✅ Quick-select buttons for skill level
-#        buttons = [
-#            [InlineKeyboardButton("Beginner", callback_data="skill_level_Beginner")],
-#            [InlineKeyboardButton("Intermediate", callback_data="skill_level_Intermediate")],
-#            [InlineKeyboardButton("Professional", callback_data="skill_level_Professional")],
-#            [InlineKeyboardButton("Expert", callback_data="skill_level_Expert")]
-#        ]
-#        reply_markup = InlineKeyboardMarkup(buttons)
-#        await update.message.reply_text("🔹 Enter your Skill Level or tap a button:", reply_markup=reply_markup)
+#         # ✅ Quick-select buttons for skill level
+#         buttons = [
+#             [InlineKeyboardButton("Beginner", callback_data="skill_level_Beginner")],
+#             [InlineKeyboardButton("Intermediate", callback_data="skill_level_Intermediate")],
+#             [InlineKeyboardButton("Professional", callback_data="skill_level_Professional")],
+#             [InlineKeyboardButton("Expert", callback_data="skill_level_Expert")]
+#         ]
+#         reply_markup = InlineKeyboardMarkup(buttons)
+#         await update.message.reply_text("🔹 Enter your Skill Level or tap a button:", reply_markup=reply_markup)
 #
-#    elif step == "group_specialization":
-#        user_details[user_id]["group_specialization"] = user_message  # ✅ Save immediately
-#        context.user_data["registration_step"] = "contractor"
-#        save_user_data(user_details)  # ✅ Save data to JSON
+#     elif step == "group_specialization":
+#         user_details[user_id]["group_specialization"] = user_message  # ✅ Save immediately
+#         context.user_data["registration_step"] = "contractor"
+#         save_user_data(user_details)  # ✅ Save data to JSON
 #
-#        # ✅ Quick-select buttons for contractor
-#        buttons = [
-#            [InlineKeyboardButton("PALO IT", callback_data="contractor_PALO IT")],
-#            [InlineKeyboardButton("Accenture", callback_data="contractor_Accenture")],
-#            [InlineKeyboardButton("Deloitte", callback_data="contractor_Deloitte")],
-#            [InlineKeyboardButton("Freelancer", callback_data="contractor_Freelancer")]
-#        ]
-#        reply_markup = InlineKeyboardMarkup(buttons)
-#        await update.message.reply_text("🔹 Enter your Contractor or tap a button:", reply_markup=reply_markup)
+#         # ✅ Quick-select buttons for contractor
+#         buttons = [
+#             [InlineKeyboardButton("PALO IT", callback_data="contractor_PALO IT")],
+#             [InlineKeyboardButton("Accenture", callback_data="contractor_Accenture")],
+#             [InlineKeyboardButton("Deloitte", callback_data="contractor_Deloitte")],
+#             [InlineKeyboardButton("Freelancer", callback_data="contractor_Freelancer")]
+#         ]
+#         reply_markup = InlineKeyboardMarkup(buttons)
+#         await update.message.reply_text("🔹 Enter your Contractor or tap a button:", reply_markup=reply_markup)
 #
-#    elif step == "contractor":
-#        user_details[user_id]["contractor"] = user_message  # ✅ Save immediately
-#        context.user_data["registration_step"] = "po_ref"
-#        save_user_data(user_details)  # ✅ Save data to JSON
-#        await update.message.reply_text("📄 Enter your PO Reference Number:")
+#     elif step == "contractor":
+#         user_details[user_id]["contractor"] = user_message  # ✅ Save immediately
+#         context.user_data["registration_step"] = "po_ref"
+#         save_user_data(user_details)  # ✅ Save data to JSON
+#         await update.message.reply_text("📄 Enter your PO Reference Number:\n\n```\n12345-ABC\n```",
+#                                         parse_mode="MarkdownV2")
 #
-#    elif step == "po_ref":
-#        user_details[user_id]["po_ref"] = user_message
-#        context.user_data["registration_step"] = "po_date"
-#        save_user_data(user_details)
-#        await update.message.reply_text("📅 Enter your PO Date Range (e.g., '1 May 24 - 30 Apr 25'):")
+#     elif step == "po_ref":
+#         user_details[user_id]["po_ref"] = user_message
+#         context.user_data["registration_step"] = "po_date"
+#         save_user_data(user_details)
+#         await update.message.reply_text("📅 Enter your PO Date Range:\n\n```\n1 May 24 - 30 Apr 25\n```",
+#                                         parse_mode="MarkdownV2")
 #
-#    elif step == "po_date":
-#        user_details[user_id]["po_date"] = user_message
-#        context.user_data["registration_step"] = "description"
-#        save_user_data(user_details)
-#        #await update.message.reply_text("📝 Enter your Job Description (e.g., 'Agile Co-Development Services'):")
-#        await update.message.reply_text("📝 Enter your Job Description:\n\n```\nAgile Co-Development Services\n```",
-#                                        parse_mode="MarkdownV2")
+#     elif step == "po_date":
+#         user_details[user_id]["po_date"] = user_message
+#         context.user_data["registration_step"] = "description"
+#         save_user_data(user_details)
+#         await update.message.reply_text("📝 Enter your Job Description:\n\n```\nAgile Co-Development Services\n```",
+#                                         parse_mode="MarkdownV2")
 #
+#     elif step == "description":
+#         user_details[user_id]["description"] = user_message
+#         context.user_data["registration_step"] = "reporting_officer"
+#         save_user_data(user_details)
+#         await update.message.reply_text("👤 Enter your Reporting Officer's Name:\n\n```\nJohn Doe\n```",
+#                                         parse_mode="MarkdownV2")
 #
+#     elif step == "reporting_officer":
+#         user_details[user_id]["reporting_officer"] = user_message
+#         save_user_data(user_details)  # ✅ Save final data
 #
-#    elif step == "description":
-#        user_details[user_id]["description"] = user_message
-#        context.user_data["registration_step"] = "reporting_officer"
-#        save_user_data(user_details)
-#        await update.message.reply_text("👤 Enter your Reporting Officer's Name:")
-#
-#    elif step == "reporting_officer":
-#        user_details[user_id]["reporting_officer"] = user_message
-#        save_user_data(user_details)  # ✅ Save final data
-#
-#        logging.info(f"✅ User {user_id} completed registration: {user_details[user_id]}")
-#        await update.message.reply_text("✅ Registration complete! Type /start to begin using the bot.")
-#
+#         logging.info(f"✅ User {user_id} completed registration: {user_details[user_id]}")
+#         await update.message.reply_text("✅ Registration complete! Type /start to begin using the bot.")
 #
 
 async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -225,10 +122,13 @@ async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYP
     if user_id not in user_details:
         user_details[user_id] = {}
 
+    # ✅ Apply sanitization before saving user input
+    sanitized_message = sanitize_input(user_message)  # ✅ Apply sanitization
+
     if step == "name":
-        user_details[user_id]["name"] = user_message  # ✅ Save immediately
+        user_details[user_id]["name"] = sanitized_message
         context.user_data["registration_step"] = "skill_level"
-        save_user_data(user_details)  # ✅ Save data to JSON
+        save_user_data(user_details)
 
         # ✅ Quick-select buttons for skill level
         buttons = [
@@ -241,9 +141,9 @@ async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYP
         await update.message.reply_text("🔹 Enter your Skill Level or tap a button:", reply_markup=reply_markup)
 
     elif step == "group_specialization":
-        user_details[user_id]["group_specialization"] = user_message  # ✅ Save immediately
+        user_details[user_id]["group_specialization"] = sanitized_message
         context.user_data["registration_step"] = "contractor"
-        save_user_data(user_details)  # ✅ Save data to JSON
+        save_user_data(user_details)
 
         # ✅ Quick-select buttons for contractor
         buttons = [
@@ -256,40 +156,39 @@ async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYP
         await update.message.reply_text("🔹 Enter your Contractor or tap a button:", reply_markup=reply_markup)
 
     elif step == "contractor":
-        user_details[user_id]["contractor"] = user_message  # ✅ Save immediately
+        user_details[user_id]["contractor"] = sanitized_message
         context.user_data["registration_step"] = "po_ref"
-        save_user_data(user_details)  # ✅ Save data to JSON
+        save_user_data(user_details)
         await update.message.reply_text("📄 Enter your PO Reference Number:\n\n```\n12345-ABC\n```",
                                         parse_mode="MarkdownV2")
 
     elif step == "po_ref":
-        user_details[user_id]["po_ref"] = user_message
+        user_details[user_id]["po_ref"] = sanitized_message
         context.user_data["registration_step"] = "po_date"
         save_user_data(user_details)
         await update.message.reply_text("📅 Enter your PO Date Range:\n\n```\n1 May 24 - 30 Apr 25\n```",
                                         parse_mode="MarkdownV2")
 
     elif step == "po_date":
-        user_details[user_id]["po_date"] = user_message
+        user_details[user_id]["po_date"] = sanitized_message
         context.user_data["registration_step"] = "description"
         save_user_data(user_details)
         await update.message.reply_text("📝 Enter your Job Description:\n\n```\nAgile Co-Development Services\n```",
                                         parse_mode="MarkdownV2")
 
     elif step == "description":
-        user_details[user_id]["description"] = user_message
+        user_details[user_id]["description"] = sanitized_message
         context.user_data["registration_step"] = "reporting_officer"
         save_user_data(user_details)
         await update.message.reply_text("👤 Enter your Reporting Officer's Name:\n\n```\nJohn Doe\n```",
                                         parse_mode="MarkdownV2")
 
     elif step == "reporting_officer":
-        user_details[user_id]["reporting_officer"] = user_message
+        user_details[user_id]["reporting_officer"] = sanitized_message
         save_user_data(user_details)  # ✅ Save final data
 
         logging.info(f"✅ User {user_id} completed registration: {user_details[user_id]}")
         await update.message.reply_text("✅ Registration complete! Type /start to begin using the bot.")
-
 
 
 # ✅ Handle Quick-Select Button Clicks
