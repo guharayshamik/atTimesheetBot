@@ -5,9 +5,35 @@ from utils.utils import load_user_details, save_user_data
 import re
 
 # Function to sanitize user input
-def sanitize_input(user_input):
-    """Sanitize user input to prevent injection attacks."""
-    return re.sub(r"[^\w\s-]", "", user_input.strip())[:50]
+# def sanitize_input(user_input):
+#     """Sanitize user input to prevent injection attacks."""
+#     return re.sub(r"[^\w\s-]", "", user_input.strip())[:200]
+
+# Updated Function to sanitize user input
+# def sanitize_input(user_input, allow_brackets=False):
+#     """Sanitize user input to prevent injection attacks, with an option to allow brackets."""
+#     if allow_brackets:
+#         # Allow (, ) along with alphanumeric, spaces, -, and common punctuation
+#         return re.sub(r"[^\w\s.,()/-]", "", user_input.strip())[:200]
+#     else:
+#         # Default: Remove all special characters except alphanumeric, spaces, -, ., /
+#         return re.sub(r"[^\w\s.,/-]", "", user_input.strip())[:200]
+
+
+def sanitize_input(user_input, allow_brackets=False, max_words=5):
+    """Sanitize user input to prevent injection attacks, enforce word limits, and optionally allow brackets."""
+
+    # Remove unwanted characters
+    if allow_brackets:
+        sanitized_text = re.sub(r"[^\w\s.,()/-]", "", user_input.strip())  # Keep (, )
+    else:
+        sanitized_text = re.sub(r"[^\w\s.,/-]", "", user_input.strip())  # Remove (, )
+
+    # Limit to the maximum number of words
+    words = sanitized_text.split()
+    sanitized_text = " ".join(words[:max_words])  # Restrict word count
+
+    return sanitized_text
 
 # Function to register a new user
 async def register_new_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -47,7 +73,11 @@ async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYP
     if user_id not in user_details:
         user_details[user_id] = {}
 
-    sanitized_message = sanitize_input(user_message)
+    sanitized_message = sanitize_input(
+        user_message,
+        allow_brackets=(step in ["description", "role_specialization", "group_specialization", "contractor"]),  # Only allow brackets for description
+        max_words=30 if step == "description" else 10 if step == "name" else 5  # Limit description to 30 words, Name to 10 words others to 5
+    )
 
     if step == "name":
         user_details[user_id]["name"] = sanitized_message
