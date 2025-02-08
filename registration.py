@@ -129,30 +129,28 @@ async def handle_registration_buttons(update: Update, context: ContextTypes.DEFA
     await query.answer()
 
     user_id = str(update.effective_user.id)
-    callback_data = query.data
-
+    callback_data = query.data.strip()
     logging.info(f"📥 Callback received: {callback_data} from user {user_id}")
 
+    # ✅ Fix splitting issue (Ensures correct category extraction)
     parts = callback_data.split("_", 2)
     if len(parts) < 2:
         logging.error(f"❌ Invalid callback data format: {callback_data}")
         await query.message.reply_text("⚠️ Unknown selection. Please try again.")
         return
 
-    category = f"{parts[0]}_{parts[1]}" if len(parts) == 3 else parts[0]
-    value = parts[2] if len(parts) == 3 else parts[1]
+    category = f"{parts[0]}_{parts[1]}" if len(parts) == 3 else parts[0]  # ✅ Corrects category
+    value = parts[2] if len(parts) == 3 else parts[1]  # ✅ Extracts correct value
 
     user_details = load_user_details()
     if user_id not in user_details:
         user_details[user_id] = {}
 
-    if category == "skill_level":
+    if category == "skill_level":  # ✅ Now matches correctly
         user_details[user_id]["skill_level"] = value
         context.user_data["registration_step"] = "role_specialization"
         save_user_data(user_details)
 
-        # ✅ Now it immediately prompts for Role Specialization
-        #await query.message.reply_text(f"✅ Skill Level set to: {value}\n\n🏢 Enter your Role Specialization:\n\n```\nDevOps Engineer - II```\n```Software Engineer - III```\n```Cloud Consultant```\n```Data Engineer\n```", parse_mode="MarkdownV2")
         await query.message.reply_text(
             f"✅ Skill Level set to: {value}\n\n🏢 Enter your Role Specialization:\n\n"
             "```\nDevOps Engineer - II\n```"
@@ -161,19 +159,36 @@ async def handle_registration_buttons(update: Update, context: ContextTypes.DEFA
             "```\nData Engineer\n```",
             parse_mode="MarkdownV2"
         )
+
     elif category == "role_specialization":
         user_details[user_id]["role_specialization"] = value
         context.user_data["registration_step"] = "group_specialization"
         save_user_data(user_details)
 
-        await query.message.reply_text(f"✅ Role Specialization set to: {value}\n\n🏢 Enter your Group Specialization:\n\n```\nConsulting\nTech Support\n```", parse_mode="MarkdownV2")
+        await query.message.reply_text(
+            f"✅ Role Specialization set to: {value}\n\n🏢 Enter your Group Specialization:\n\n```\nConsulting\nTech Support\n```",
+            parse_mode="MarkdownV2"
+        )
 
     elif category == "group_specialization":
         user_details[user_id]["group_specialization"] = value
         context.user_data["registration_step"] = "contractor"
         save_user_data(user_details)
 
-        await query.message.reply_text(f"✅ Group Specialization set to: {value}\n\n🔹 Enter your Contractor or tap a button:", parse_mode="MarkdownV2")
+        await query.message.reply_text(
+            f"✅ Group Specialization set to: {value}\n\n🔹 Enter your Contractor or tap a button:",
+            parse_mode="MarkdownV2"
+        )
+
+    elif category == "contractor":
+        user_details[user_id]["contractor"] = value
+        context.user_data["registration_step"] = "po_ref"
+        save_user_data(user_details)
+
+        await query.message.reply_text(
+            f"✅ Contractor set to: {value}\n\n📄 Enter your PO Reference Number:\n\n```\n12345-ABC\n```",
+            parse_mode="MarkdownV2"
+        )
 
     else:
         logging.error(f"❌ Unhandled category: {category} - Value: {value}")
