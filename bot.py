@@ -7,7 +7,6 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 #from utils.utils import USER_DETAILS
 from timesheet_generator import generate_timesheet_excel
-from registration import register_new_user, capture_user_details  # Import registration functions
 from telegram.ext import MessageHandler, filters  # ✅ Add MessageHandler and filters
 #from utils.utils import USER_DETAILS, load_user_details  # ✅ Import load_user_details
 from utils.utils import PUBLIC_HOLIDAYS, load_user_details # ✅ Load dynamically
