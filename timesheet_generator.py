@@ -178,34 +178,7 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
             at_work = 0.0
             public_holiday = 1.0
             remark = PUBLIC_HOLIDAYS[public_holiday_check]  # Now shows "New Year's Day", "Labor Day", etc.
-#
-        # ✅ **Handle User Leaves (Fixed)** REMOVED this for now
-        #for leave_date, leave_type in expanded_leave_details:
-        #    if leave_date == public_holiday_check:
-        #        print(f"📌 Leave Found: {leave_date} - {leave_type}")
-        #        at_work = 0.0  # Ensure work is set to 0.0
-        #        if leave_type == "Sick Leave":
-        #            sick_leave = 1.0
-        #        elif leave_type == "Childcare Leave":
-        #            childcare_leave = 1.0
-        #        elif leave_type == "Annual Leave":
-        #            annual_leave = 1.0
-        #        remark = leave_type  # Now correctly displays leave type
-        # ✅ **Handle User Leaves**
-        #for leave_date, leave_type in expanded_leave_details:
-        #    if leave_date == public_holiday_check:
-        #        # ✅ Skip setting leave if it's a holiday or weekend
-        #        continue
-#
-        #    if leave_date == date_obj.strftime("%Y-%m-%d"):
-        #        at_work = 0.0  # Ensure work is set to 0.0
-        #        if leave_type == "Sick Leave":
-        #            sick_leave = 1.0
-        #        elif leave_type == "Childcare Leave":
-        #            childcare_leave = 1.0
-        #        elif leave_type == "Annual Leave":
-        #            annual_leave = 1.0
-        #        remark = leave_type  # Now correctly displays leave type
+
         # ✅ **Handle User Leaves**
         for leave_date, leave_type in expanded_leave_details:
             #if leave_date == public_holiday_check:
@@ -260,14 +233,14 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
             #   cell.font = bold_font
 
         # ✅ Apply Yellow Fill for At Work, Sick Leave, Childcare Leave, and Annual Leave up to row 31
-        for row in range(11, 42):  # Assuming row 11 is the first data row, row 41 is the last (31st day)
+        for row in range(11, 11 + days_in_month):  # Assuming row 11 is the first data row, row 41 is the last (31st day)
             for col_num in [3, 5, 6,
                                 7]:  # Columns: At Work (C), Sick Leave (E), Childcare Leave (F), Annual Leave (G)
                     cell = ws.cell(row=row, column=col_num)
                     cell.fill = yellow_fill
 
         # ✅ Apply right aligned for At Work, Public Holiday, Sick Leave, Childcare Leave, and Annual Leave up to row 31
-        for row in range(11, 42):  # Assuming row 11 is the first data row, row 41 is the last (31st day)
+        for row in range(11, 11 + days_in_month):  # Assuming row 11 is the first data row, row 41 is the last (31st day)
             for col_num in [3, 4, 5, 6,
                                 7]:  # Columns: At Work (C), Sick Leave (E), Childcare Leave (F), Annual Leave (G)
                     cell = ws.cell(row=row, column=col_num)
@@ -312,7 +285,7 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
         cell.font = bold_font
         cell.alignment = right_alignment  # Apply right alignment
 
-    current_row += 2 # Add an extra space
+    #current_row += 1 # Add an extra space
     # ✅ **Signature Section**
     current_date = datetime.now().strftime("%d - %B - %Y")
     ws[f"A{current_row + 2}"] = "Officer"
