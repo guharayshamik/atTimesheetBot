@@ -50,7 +50,7 @@ async def handle_deregistration_buttons(update: Update, context: ContextTypes.DE
             del user_details[user_id]  # Remove user data
             save_user_data(user_details)  # Save updated data
 
-            logging.info(f"🗑️ User {user_id} data removed.")
+            logging.info(f"User {user_id} data removed.")
             await query.message.reply_text(
                 "✅ Your registration data has been **reset**.\n\nType /start to register again.")
 

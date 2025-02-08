@@ -4,55 +4,6 @@ from telegram.ext import ContextTypes
 from utils.utils import load_user_details, save_user_data
 import re
 from security import sanitize_input
-# Function to sanitize user input
-# def sanitize_input(user_input):
-#     """Sanitize user input to prevent injection attacks."""
-#     return re.sub(r"[^\w\s-]", "", user_input.strip())[:200]
-
-# Updated Function to sanitize user input
-# def sanitize_input(user_input, allow_brackets=False):
-#     """Sanitize user input to prevent injection attacks, with an option to allow brackets."""
-#     if allow_brackets:
-#         # Allow (, ) along with alphanumeric, spaces, -, and common punctuation
-#         return re.sub(r"[^\w\s.,()/-]", "", user_input.strip())[:200]
-#     else:
-#         # Default: Remove all special characters except alphanumeric, spaces, -, ., /
-#         return re.sub(r"[^\w\s.,/-]", "", user_input.strip())[:200]
-
-
-# def sanitize_input(user_input, allow_brackets=False, max_words=5):
-#     """Sanitize user input to prevent injection attacks, enforce word limits, and optionally allow brackets."""
-#
-#     # Remove unwanted characters
-#     if allow_brackets:
-#         sanitized_text = re.sub(r"[^\w\s.,()/-]", "", user_input.strip())  # Keep (, )
-#     else:
-#         sanitized_text = re.sub(r"[^\w\s.,/-]", "", user_input.strip())  # Remove (, )
-#
-#     # Limit to the maximum number of words
-#     words = sanitized_text.split()
-#     sanitized_text = " ".join(words[:max_words])  # Restrict word count
-#
-#     return sanitized_text
-
-# def sanitize_input(user_input, allow_brackets=False, max_words=5):
-#     """Sanitize user input to prevent injection attacks, enforce word limits, and optionally allow brackets."""
-#
-#     # ✅ Remove unwanted characters
-#     if allow_brackets:
-#         sanitized_text = re.sub(r"[^\w\s.,()/-]", "", user_input.strip())  # Allow (, )
-#     else:
-#         sanitized_text = re.sub(r"[^\w\s.,/-]", "", user_input.strip())  # Remove (, )
-#
-#     # ✅ Prevent SQL Injection: Remove semicolons, multiple spaces
-#     sanitized_text = re.sub(r";", "", sanitized_text)  # Remove SQL Injection attempt
-#     sanitized_text = re.sub(r"\s+", " ", sanitized_text)  # Normalize spaces
-#
-#     # ✅ Enforce Maximum Words
-#     words = sanitized_text.split()
-#     sanitized_text = " ".join(words[:max_words])  # Restrict word count
-#
-#     return sanitized_text
 
 
 # Function to register a new user
@@ -113,7 +64,7 @@ async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYP
             [InlineKeyboardButton("Expert", callback_data="skill_level_Expert")]
         ]
         reply_markup = InlineKeyboardMarkup(buttons)
-        await update.message.reply_text("🔹 Enter your Skill Level or tap a button:", reply_markup=reply_markup)
+        await update.message.reply_text("🔹 Tap a button to enter your Skill Level:", reply_markup=reply_markup)
 
     elif step == "role_specialization":
         user_details[user_id]["role_specialization"] = sanitized_message
@@ -121,7 +72,7 @@ async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYP
         save_user_data(user_details)
 
         # Instead of prompting for Role Specialization again, move to Group Specialization
-        await update.message.reply_text(f"✅ Role Specialization set to: {escape_markdown_v2(sanitized_message)}\n\n🏢 Enter your Group Specialization:\n\n```\nConsulting```", parse_mode="MarkdownV2")
+        await update.message.reply_text(f"✔️ Role Specialization set to: {escape_markdown_v2(sanitized_message)}\n\nEnter your Group Specialization:\n\neg:\n```\nConsulting```", parse_mode="MarkdownV2")
 
     elif step == "group_specialization":
         user_details[user_id]["group_specialization"] = sanitized_message
@@ -136,34 +87,34 @@ async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYP
             [InlineKeyboardButton("Freelancer", callback_data="contractor_Freelancer")]
         ]
         reply_markup = InlineKeyboardMarkup(buttons)
-        await update.message.reply_text("🔹 Enter your Contractor or tap a button:", reply_markup=reply_markup)
+        await update.message.reply_text("Enter your Contractor or tap a button:", reply_markup=reply_markup)
 
     elif step == "contractor":
         user_details[user_id]["contractor"] = sanitized_message
         context.user_data["registration_step"] = "po_ref"
         save_user_data(user_details)
-        await update.message.reply_text("📄 Enter your PO Reference Number:\n\n```\n12345-ABC\n```",
+        await update.message.reply_text("Enter your PO Reference Number:\n\neg:\n```\nGVT000ABC1234\n```",
                                         parse_mode="MarkdownV2")
 
     elif step == "po_ref":
         user_details[user_id]["po_ref"] = sanitized_message
         context.user_data["registration_step"] = "po_date"
         save_user_data(user_details)
-        await update.message.reply_text("📅 Enter your PO Date Range:\n\n```\n1 May 24 - 30 Apr 25\n```",
+        await update.message.reply_text("📅 Enter your PO Date Range:\n\neg:\n```\n1 May 24 - 30 Apr 25\n```",
                                         parse_mode="MarkdownV2")
 
     elif step == "po_date":
         user_details[user_id]["po_date"] = sanitized_message
         context.user_data["registration_step"] = "description"
         save_user_data(user_details)
-        await update.message.reply_text("📝 Enter your Job Description:\n\n```\nAgile Co-Development Services\n```",
+        await update.message.reply_text("Enter your Job Description:\n\neg:\n```\nAgile Co-Development Services\n```",
                                         parse_mode="MarkdownV2")
 
     elif step == "description":
         user_details[user_id]["description"] = sanitized_message
         context.user_data["registration_step"] = "reporting_officer"
         save_user_data(user_details)
-        await update.message.reply_text("👤 Enter your Reporting Officer's Name:\n\n```\nJohn Doe\n```",
+        await update.message.reply_text("👤 Enter your Reporting Officer's Name:\n\neg:\n```\nJohn Doe\n```",
                                         parse_mode="MarkdownV2")
 
     elif step == "reporting_officer":
@@ -171,7 +122,7 @@ async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYP
         save_user_data(user_details)  # Save final data
 
         logging.info(f"User {user_id} completed registration: {user_details[user_id]}")
-        await update.message.reply_text("✅ Registration complete! Type /start to begin using the bot.")
+        await update.message.reply_text("✔️ Registration complete! Type /start to begin using the bot.")
 
 
 
@@ -203,7 +154,7 @@ async def handle_registration_buttons(update: Update, context: ContextTypes.DEFA
         save_user_data(user_details)
 
         await query.message.reply_text(
-            f"✅ Skill Level set to: {value}\n\n🏢 Enter your Role Specialization:\n\n"
+            f"✔️ Skill Level set to: {value}\n\nEnter your Role Specialization:\n\neg:\n"
             "```\nDevOps Engineer - II\n```"
             "```\nSoftware Engineer - III\n```"
             "```\nCloud Consultant\n```"
@@ -217,7 +168,7 @@ async def handle_registration_buttons(update: Update, context: ContextTypes.DEFA
         save_user_data(user_details)
 
         await query.message.reply_text(
-            f"✅ Role Specialization set to: {value}\n\n🏢 Enter your Group Specialization:\n\n```\nConsulting\nTech Support\n```",
+            f"✔️ Role Specialization set to: {value}\n\nEnter your Group Specialization:\n\n```\nConsulting\nTech Support\n```",
             parse_mode="MarkdownV2"
         )
 
@@ -227,7 +178,7 @@ async def handle_registration_buttons(update: Update, context: ContextTypes.DEFA
         save_user_data(user_details)
 
         await query.message.reply_text(
-            f"✅ Group Specialization set to: {value}\n\n🔹 Enter your Contractor or tap a button:",
+            f"✔️ Group Specialization set to: {value}\n\nEnter your Contractor or tap a button:",
             parse_mode="MarkdownV2"
         )
 
@@ -237,7 +188,7 @@ async def handle_registration_buttons(update: Update, context: ContextTypes.DEFA
         save_user_data(user_details)
 
         await query.message.reply_text(
-            f"✅ Contractor set to: {value}\n\n📄 Enter your PO Reference Number:\n\n```\n12345-ABC\n```",
+            f"✔️ Contractor set to: {value}\n\nEnter your PO Reference Number:\n\n```\n12345-ABC\n```",
             parse_mode="MarkdownV2"
         )
 
