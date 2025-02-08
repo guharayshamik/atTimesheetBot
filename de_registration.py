@@ -5,7 +5,8 @@ from utils.utils import load_user_details, save_user_data
 
 # Function to escape MarkdownV2 special characters e.g. "/"
 def escape_markdown_v2(text):
-    escape_chars = r'\_*[]()~`>#+-=|{}.!'
+    #escape_chars = r'\_*[]()~`>#+-=|{}.!'
+    escape_chars = r'\_[]()~`>#+-=|{}.!'
     return ''.join(f'\\{char}' if char in escape_chars else char for char in text)
 
 # Function to confirm de-registration
@@ -52,11 +53,12 @@ async def handle_deregistration_buttons(update: Update, context: ContextTypes.DE
 
             logging.info(f"User {user_id} data removed.")
             await query.message.reply_text(
-                "✅ Your registration data has been **reset**.\n\nType /start to register again.")
+                 "♻️ Your registration data has been reset.\n\nType /start to register again.")
+
 
         else:
             await query.message.reply_text("⚠️ You are not registered yet! Type /start to begin.")
 
     elif callback_data == "deregister_cancel":
-        await query.message.reply_text("✅ Your data is **safe**! No changes were made.")
+        await query.message.reply_text("✅ Your data is safe! No changes were made.")
 

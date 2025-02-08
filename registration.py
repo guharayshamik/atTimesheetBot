@@ -16,7 +16,7 @@ async def register_new_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if user_id in user_details:
         return  # User already exists, no need to register again
 
-    await update.message.reply_text("👋 Welcome New User! Please enter your full name:")
+    await update.message.reply_text("👋 Welcome New User!\n\nPlease enter your Full Name:")
     context.user_data["registration_step"] = "name"
 
 def escape_markdown_v2(text):
@@ -64,7 +64,7 @@ async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYP
             [InlineKeyboardButton("Expert", callback_data="skill_level_Expert")]
         ]
         reply_markup = InlineKeyboardMarkup(buttons)
-        await update.message.reply_text("🔹 Tap a button to enter your Skill Level:", reply_markup=reply_markup)
+        await update.message.reply_text("↘️ Tap a button to enter your Skill Level:", reply_markup=reply_markup)
 
     elif step == "role_specialization":
         user_details[user_id]["role_specialization"] = sanitized_message
@@ -72,7 +72,7 @@ async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYP
         save_user_data(user_details)
 
         # Instead of prompting for Role Specialization again, move to Group Specialization
-        await update.message.reply_text(f"✔️ Role Specialization set to: {escape_markdown_v2(sanitized_message)}\n\nEnter your Group Specialization:\n\neg:\n```\nConsulting```", parse_mode="MarkdownV2")
+        await update.message.reply_text(f"✔️ Role Specialization set to: {escape_markdown_v2(sanitized_message)}\n\n↘️ Enter your Group Specialization:\n\neg:\n```\nConsulting```", parse_mode="MarkdownV2")
 
     elif step == "group_specialization":
         user_details[user_id]["group_specialization"] = sanitized_message
@@ -87,13 +87,13 @@ async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYP
             [InlineKeyboardButton("Freelancer", callback_data="contractor_Freelancer")]
         ]
         reply_markup = InlineKeyboardMarkup(buttons)
-        await update.message.reply_text("Enter your Contractor or tap a button:", reply_markup=reply_markup)
+        await update.message.reply_text("↘️ Enter your Contractor or tap a button:", reply_markup=reply_markup)
 
     elif step == "contractor":
         user_details[user_id]["contractor"] = sanitized_message
         context.user_data["registration_step"] = "po_ref"
         save_user_data(user_details)
-        await update.message.reply_text("Enter your PO Reference Number:\n\neg:\n```\nGVT000ABC1234\n```",
+        await update.message.reply_text("➡ Enter your PO Reference Number:\n\neg:\n```\nGVT000ABC1234\n```",
                                         parse_mode="MarkdownV2")
 
     elif step == "po_ref":
@@ -107,7 +107,7 @@ async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYP
         user_details[user_id]["po_date"] = sanitized_message
         context.user_data["registration_step"] = "description"
         save_user_data(user_details)
-        await update.message.reply_text("Enter your Job Description:\n\neg:\n```\nAgile Co-Development Services\n```",
+        await update.message.reply_text("↘️ Enter your Job Description:\n\neg:\n```\nAgile Co-Development Services\n```",
                                         parse_mode="MarkdownV2")
 
     elif step == "description":
@@ -122,7 +122,7 @@ async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYP
         save_user_data(user_details)  # Save final data
 
         logging.info(f"User {user_id} completed registration: {user_details[user_id]}")
-        await update.message.reply_text("✔️ Registration complete! Type /start to begin using the bot.")
+        await update.message.reply_text("✅ Registration complete! Type /start to begin using the bot.")
 
 
 
@@ -154,7 +154,7 @@ async def handle_registration_buttons(update: Update, context: ContextTypes.DEFA
         save_user_data(user_details)
 
         await query.message.reply_text(
-            f"✔️ Skill Level set to: {value}\n\nEnter your Role Specialization:\n\neg:\n"
+            f"✔️ Skill Level set to: {value}\n\n↘️ Enter your Role Specialization:\n\neg:\n"
             "```\nDevOps Engineer - II\n```"
             "```\nSoftware Engineer - III\n```"
             "```\nCloud Consultant\n```"
@@ -168,7 +168,7 @@ async def handle_registration_buttons(update: Update, context: ContextTypes.DEFA
         save_user_data(user_details)
 
         await query.message.reply_text(
-            f"✔️ Role Specialization set to: {value}\n\nEnter your Group Specialization:\n\n```\nConsulting\nTech Support\n```",
+            f"✔️ Role Specialization set to: {value}\n\n↘️ Enter your Group Specialization:\n\n```\nConsulting\nTech Support\n```",
             parse_mode="MarkdownV2"
         )
 
@@ -178,7 +178,7 @@ async def handle_registration_buttons(update: Update, context: ContextTypes.DEFA
         save_user_data(user_details)
 
         await query.message.reply_text(
-            f"✔️ Group Specialization set to: {value}\n\nEnter your Contractor or tap a button:",
+            f"✔️ Group Specialization set to: {value}\n\n↘️ Enter your Contractor or tap a button:",
             parse_mode="MarkdownV2"
         )
 
@@ -188,7 +188,7 @@ async def handle_registration_buttons(update: Update, context: ContextTypes.DEFA
         save_user_data(user_details)
 
         await query.message.reply_text(
-            f"✔️ Contractor set to: {value}\n\nEnter your PO Reference Number:\n\n```\n12345-ABC\n```",
+            f"✔️ Contractor set to: {value}\n\n↘️ Enter your PO Reference Number:\n\neg:\n```\nGVT000ABC1234\n```",
             parse_mode="MarkdownV2"
         )
 
