@@ -4,22 +4,22 @@ from telegram.ext import ContextTypes
 from utils.utils import load_user_details, save_user_data
 import re
 
-# ✅ Function to sanitize user input
+# Function to sanitize user input
 def sanitize_input(user_input):
     """Sanitize user input to prevent injection attacks."""
     return re.sub(r"[^\w\s-]", "", user_input.strip())[:50]
 
-# ✅ Function to register a new user
+# Function to register a new user
 async def register_new_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
 
-    # ✅ Reload USER_DETAILS dynamically
+    # Reload USER_DETAILS dynamically
     user_details = load_user_details()
 
     if user_id in user_details:
-        return  # ✅ User already exists, no need to register again
+        return  # User already exists, no need to register again
 
-    await update.message.reply_text("👋 Welcome! Please enter your full name:")
+    await update.message.reply_text("👋 Welcome New User! Please enter your full name:")
     context.user_data["registration_step"] = "name"
 
 def escape_markdown_v2(text):
@@ -40,10 +40,10 @@ async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYP
         await update.message.reply_text("❌ Registration error. Please type /start to retry.")
         return
 
-    # ✅ Load latest user details before modifying
+    # Load latest user details before modifying
     user_details = load_user_details()
 
-    # ✅ Ensure user exists before modifying
+    # Ensure user exists before modifying
     if user_id not in user_details:
         user_details[user_id] = {}
 
@@ -54,7 +54,7 @@ async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYP
         context.user_data["registration_step"] = "skill_level"
         save_user_data(user_details)
 
-        # ✅ Quick-select buttons for skill level
+        # Quick-select buttons for skill level
         buttons = [
             [InlineKeyboardButton("Beginner", callback_data="skill_level_Beginner")],
             [InlineKeyboardButton("Intermediate", callback_data="skill_level_Intermediate")],
@@ -69,7 +69,7 @@ async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYP
         context.user_data["registration_step"] = "group_specialization"
         save_user_data(user_details)
 
-        # ✅ Instead of prompting for Role Specialization again, move to Group Specialization
+        # Instead of prompting for Role Specialization again, move to Group Specialization
         await update.message.reply_text(f"✅ Role Specialization set to: {escape_markdown_v2(sanitized_message)}\n\n🏢 Enter your Group Specialization:\n\n```\nConsulting```", parse_mode="MarkdownV2")
 
     elif step == "group_specialization":
@@ -77,7 +77,7 @@ async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYP
         context.user_data["registration_step"] = "contractor"
         save_user_data(user_details)
 
-        # ✅ Quick-select buttons for contractor
+        # Quick-select buttons for contractor
         buttons = [
             [InlineKeyboardButton("PALO IT", callback_data="contractor_PALO IT")],
             [InlineKeyboardButton("Accenture", callback_data="contractor_Accenture")],
@@ -117,9 +117,9 @@ async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYP
 
     elif step == "reporting_officer":
         user_details[user_id]["reporting_officer"] = sanitized_message
-        save_user_data(user_details)  # ✅ Save final data
+        save_user_data(user_details)  # Save final data
 
-        logging.info(f"✅ User {user_id} completed registration: {user_details[user_id]}")
+        logging.info(f"User {user_id} completed registration: {user_details[user_id]}")
         await update.message.reply_text("✅ Registration complete! Type /start to begin using the bot.")
 
 
@@ -130,23 +130,23 @@ async def handle_registration_buttons(update: Update, context: ContextTypes.DEFA
 
     user_id = str(update.effective_user.id)
     callback_data = query.data.strip()
-    logging.info(f"📥 Callback received: {callback_data} from user {user_id}")
+    logging.info(f"Callback received: {callback_data} from user {user_id}")
 
-    # ✅ Fix splitting issue (Ensures correct category extraction)
+    # Fix splitting issue (Ensures correct category extraction)
     parts = callback_data.split("_", 2)
     if len(parts) < 2:
-        logging.error(f"❌ Invalid callback data format: {callback_data}")
+        logging.error(f"Invalid callback data format: {callback_data}")
         await query.message.reply_text("⚠️ Unknown selection. Please try again.")
         return
 
-    category = f"{parts[0]}_{parts[1]}" if len(parts) == 3 else parts[0]  # ✅ Corrects category
-    value = parts[2] if len(parts) == 3 else parts[1]  # ✅ Extracts correct value
+    category = f"{parts[0]}_{parts[1]}" if len(parts) == 3 else parts[0]  # Corrects category
+    value = parts[2] if len(parts) == 3 else parts[1]  # Extracts correct value
 
     user_details = load_user_details()
     if user_id not in user_details:
         user_details[user_id] = {}
 
-    if category == "skill_level":  # ✅ Now matches correctly
+    if category == "skill_level":  # Now matches correctly
         user_details[user_id]["skill_level"] = value
         context.user_data["registration_step"] = "role_specialization"
         save_user_data(user_details)
@@ -191,5 +191,5 @@ async def handle_registration_buttons(update: Update, context: ContextTypes.DEFA
         )
 
     else:
-        logging.error(f"❌ Unhandled category: {category} - Value: {value}")
+        logging.error(f"Unhandled category: {category} - Value: {value}")
         await query.message.reply_text("⚠️ Unknown selection. Please try again.")

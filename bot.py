@@ -5,14 +5,10 @@ from calendar import monthrange
 from dotenv import load_dotenv
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
-#from utils.utils import USER_DETAILS
 from timesheet_generator import generate_timesheet_excel
-from telegram.ext import MessageHandler, filters  # ✅ Add MessageHandler and filters
-#from utils.utils import USER_DETAILS, load_user_details  # ✅ Import load_user_details
-from utils.utils import PUBLIC_HOLIDAYS, load_user_details # ✅ Load dynamically
-from registration import register_new_user, capture_user_details, handle_registration_buttons  # ✅ Import the missing function
-
-
+from telegram.ext import MessageHandler, filters  # Add MessageHandler and filters
+from utils.utils import PUBLIC_HOLIDAYS, load_user_details # Load dynamically
+from registration import register_new_user, capture_user_details, handle_registration_buttons  # Import the missing function
 
 
 # Load environment variables
@@ -34,125 +30,10 @@ if not BOT_TOKEN:
 # In-memory storage for user inputs
 user_leaves = {}
 
-# ✅ Start Command -- OLD START
-#async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-#    user_id = str(update.effective_user.id)
-#    user_details = USER_DETAILS.get(user_id)
-#
-#    if user_details:
-#        name = user_details["name"]
-#        buttons = [[InlineKeyboardButton(month, callback_data=f"month_{month}")] for month in [
-#            "January", "February", "March", "April", "May", "June",
-#            "July", "August", "September", "October", "November", "December"
-#        ]]
-#        reply_markup = InlineKeyboardMarkup(buttons)
-#        logger.info(f"User {name} ({user_id}) started the bot.")
-#
-#        await update.message.reply_text(f"Welcome, {name}! Please select the month for the timesheet:", reply_markup=reply_markup)
-#    else:
-#        logger.warning(f"Unregistered user {user_id} attempted to start the bot.")
-#        await update.message.reply_text("You are not registered in the system. Please contact your administrator.")
-
-#NEW START FLOW begins from here:
-
-# ✅ **Start Command - Checks if User Exists or Registers New User**
-#async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-#    user_id = str(update.effective_user.id)
-#
-#    if user_id in USER_DETAILS:
-#        name = USER_DETAILS[user_id]["name"]
-#        buttons = [[InlineKeyboardButton(month, callback_data=f"month_{month}")] for month in [
-#            "January", "February", "March", "April", "May", "June",
-#            "July", "August", "September", "October", "November", "December"
-#        ]]
-#        reply_markup = InlineKeyboardMarkup(buttons)
-#        logger.info(f"Returning user {name} ({user_id}) started the bot.")
-#        await update.message.reply_text(f"Welcome back, {name}! Select a month for your timesheet:", reply_markup=reply_markup)
-#    else:
-#        logger.info(f"New user {user_id} detected. Redirecting to registration.")
-#        await register_new_user(update, context)  # Call the registration function
-
-#async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-#    user_id = str(update.effective_user.id)
-#    user_details = USER_DETAILS.get(user_id)  # ✅ Now updates correctly after registration!
-#
-#    if user_details:
-#        name = user_details["name"]
-#        buttons = [[InlineKeyboardButton(month, callback_data=f"month_{month}")] for month in [
-#            "January", "February", "March", "April", "May", "June",
-#            "July", "August", "September", "October", "November", "December"
-#        ]]
-#        reply_markup = InlineKeyboardMarkup(buttons)
-#        logger.info(f"User {name} ({user_id}) started the bot.")
-#
-#        await update.message.reply_text(f"Welcome, {name}! Please select the month for the timesheet:", reply_markup=reply_markup)
-#    else:
-#        logger.info(f"New user {user_id} detected. Redirecting to registration.")
-#        await register_new_user(update, context)
-#
-#async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-#    user_id = str(update.effective_user.id)
-#
-#    # ✅ Force reload USER_DETAILS to reflect new registrations
-#    load_user_details()
-#
-#    user_details = USER_DETAILS.get(user_id)  # ✅ Now updates correctly after registration!
-#
-#    if user_details:
-#        name = user_details["name"]
-#        buttons = [[InlineKeyboardButton(month, callback_data=f"month_{month}")] for month in [
-#            "January", "February", "March", "April", "May", "June",
-#            "July", "August", "September", "October", "November", "December"
-#        ]]
-#        reply_markup = InlineKeyboardMarkup(buttons)
-#        logger.info(f"User {name} ({user_id}) started the bot.")
-#
-#        await update.message.reply_text(f"Welcome, {name}! Please select the month for the timesheet:", reply_markup=reply_markup)
-#    else:
-#        logger.info(f"New user {user_id} detected. Redirecting to registration.")
-#        await register_new_user(update, context)
-
-#async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-#    user_id = str(update.effective_user.id)
-#
-#    # ✅ Force reload USER_DETAILS to reflect new registrations
-#    load_user_details()
-#
-#    user_details = USER_DETAILS.get(user_id)  # ✅ Now updates correctly after registration!
-#
-#    if user_details:
-#        name = user_details["name"]
-#        buttons = [[InlineKeyboardButton(month, callback_data=f"month_{month}")] for month in [
-#            "January", "February", "March", "April", "May", "June",
-#            "July", "August", "September", "October", "November", "December"
-#        ]]
-#        reply_markup = InlineKeyboardMarkup(buttons)
-#        logger.info(f"User {name} ({user_id}) started the bot.")
-#
-#        await update.message.reply_text(f"Welcome, {name}! Please select the month for the timesheet:", reply_markup=reply_markup)
-#    else:
-#        logger.info(f"New user {user_id} detected. Redirecting to registration.")
-#        await register_new_user(update, context)
-
-#async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-#    user_id = str(update.effective_user.id)
-#
-#    # ✅ Reload user details dynamically
-#    USER_DETAILS = load_user_details()
-#
-#    user_details = USER_DETAILS.get(user_id)
-#
-#    if user_details:
-#        name = user_details["name"]
-#        await update.message.reply_text(f"Welcome back, {name}! Select a month for your timesheet.")
-#    else:
-#        await register_new_user(update, context)  # ✅ Redirect to registration
-#
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
 
-    # ✅ Reload user details dynamically
+    # Reload user details dynamically
     USER_DETAILS = load_user_details()
 
     user_details = USER_DETAILS.get(user_id)
@@ -173,10 +54,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     else:
         logger.info(f"New user {user_id} detected. Redirecting to registration.")
-        await register_new_user(update, context)  # ✅ Redirect to registration
+        await register_new_user(update, context)  # Redirect to registration
 
 
-# ✅ Handle Month Selection
+# Handle Month Selection
 async def month_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -192,14 +73,14 @@ async def month_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(buttons)
     await query.message.reply_text("Do you want to apply for leave before generating the timesheet?", reply_markup=reply_markup)
 
-# ✅ Handle Apply Leave
+# Handle Apply Leave
 async def apply_leave(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     logger.info("User selected 'Apply Leave' button.")  # Debugging log
     await show_leave_type_selection(update, context)
 
-# ✅ Show Leave Type Selection
+# Show Leave Type Selection
 async def show_leave_type_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -212,7 +93,7 @@ async def show_leave_type_selection(update: Update, context: ContextTypes.DEFAUL
     reply_markup = InlineKeyboardMarkup(buttons)
     await query.message.reply_text("Please choose the leave type:", reply_markup=reply_markup)
 
-# ✅ Handle Leave Type Selection
+# Handle Leave Type Selection
 async def leave_type_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -223,7 +104,7 @@ async def leave_type_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     await show_start_date_selection(update, context)
 
-# ✅ Show Start Date Selection
+# Show Start Date Selection
 async def show_start_date_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -242,7 +123,7 @@ async def show_start_date_selection(update: Update, context: ContextTypes.DEFAUL
     reply_markup = InlineKeyboardMarkup(buttons)
     await query.message.reply_text("Select the **Start Date** for your leave:", reply_markup=reply_markup)
 
-# ✅ Handle Start Date Selection
+# Handle Start Date Selection
 async def start_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -272,7 +153,7 @@ async def start_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
         await query.message.reply_text("Error: Selected date format is incorrect. Please try again.")
 
 
-# ✅ Show End Date Selection (🔧 FIXED MISSING FUNCTION)
+# Show End Date Selection ( FIXED MISSING FUNCTION )
 async def show_end_date_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -291,7 +172,7 @@ async def show_end_date_selection(update: Update, context: ContextTypes.DEFAULT_
     reply_markup = InlineKeyboardMarkup(buttons)
     await query.message.reply_text("Select the **End Date** for your leave:", reply_markup=reply_markup)
 
-# ✅ Handle End Date Selection
+# Handle End Date Selection
 async def end_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -317,11 +198,11 @@ async def end_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.message.reply_text("Error: Missing leave details. Please restart.")
             return
 
-        # ✅ Fix: Validate date format before storing
+        # Fix: Validate date format before storing
         start_date_obj = datetime.strptime(start_date, "%d-%B")
         end_date_obj = datetime.strptime(selected_end_date, "%d-%B")
 
-        # ✅ Store properly formatted dates
+        # Store properly formatted dates
         if user_id not in user_leaves:
             user_leaves[user_id] = {}
         if month not in user_leaves[user_id]:
@@ -342,7 +223,7 @@ async def end_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.message.reply_text("Error: Selected date format is incorrect. Please try again.")
 
 
-# ✅ Handle Generate Timesheet
+# Handle Generate Timesheet
 async def generate_timesheet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -361,13 +242,13 @@ async def generate_timesheet(update: Update, context: ContextTypes.DEFAULT_TYPE)
         year = datetime.now().year
         leave_data = user_leaves.get(user_id, {}).get(month, [])
 
-        # ✅ Debugging: Print stored leave data before processing
+        # Debugging: Print stored leave data before processing
         logger.info(f"Raw leave_data for user {user_id}: {leave_data}")
 
         parsed_leave_data = []
         for leave_entry in leave_data:
             try:
-                # ✅ Debugging: Print each leave entry before unpacking
+                # Debugging: Print each leave entry before unpacking
                 logger.info(f"Processing leave entry: {leave_entry}")
 
                 # Check tuple length before unpacking
@@ -378,10 +259,10 @@ async def generate_timesheet(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
                 start_date_str, end_date_str, leave_type = leave_entry
 
-                # ✅ Debugging: Print extracted values
+                # Debugging: Print extracted values
                 logger.info(f"Extracted - Start: {start_date_str}, End: {end_date_str}, Type: {leave_type}")
 
-                # ✅ Validate and convert date format
+                # Validate and convert date format
                 start_date_obj = datetime.strptime(start_date_str, "%d-%B").replace(year=year)
                 end_date_obj = datetime.strptime(end_date_str, "%d-%B").replace(year=year)
 
@@ -393,111 +274,34 @@ async def generate_timesheet(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 user_leaves[user_id][month] = []
                 return
 
-        # ✅ Debugging: Print processed leave data before generating timesheet
+        # Debugging: Print processed leave data before generating timesheet
         logger.info(f"Final parsed_leave_data: {parsed_leave_data}")
 
-        # ✅ Generate timesheet with correct format
+        # Generate timesheet with correct format
         output_file = generate_timesheet_excel(user_id, month_number, year, parsed_leave_data)
 
         with open(output_file, "rb") as doc:
             await query.message.reply_document(document=doc, filename=os.path.basename(output_file))
 
-        user_leaves[user_id][month] = []  # ✅ Clear only after successful generation
+        user_leaves[user_id][month] = []  # Clear only after successful generation
 
     except Exception as e:
         logger.error(f"Error generating timesheet: {e}")
         await query.message.reply_text(f"Error generating timesheet: {e}")
 
-
-
-# ✅ Register Handlers OLD MAIN
-#def main():
-#    application = Application.builder().token(BOT_TOKEN).build()
-#
-#    application.add_handler(CommandHandler("start", start))
-#    application.add_handler(CallbackQueryHandler(month_handler, pattern="^month_"))
-#    application.add_handler(CallbackQueryHandler(apply_leave, pattern="^apply_leave$"))  # ✅ FIXED: Handler was missing
-#    application.add_handler(CallbackQueryHandler(leave_type_handler, pattern="^leave_"))
-#    application.add_handler(CallbackQueryHandler(start_date_handler, pattern="^start_date_"))
-#    application.add_handler(CallbackQueryHandler(end_date_handler, pattern="^end_date_"))
-#    application.add_handler(CallbackQueryHandler(generate_timesheet, pattern="^(generate_timesheet_now|generate_timesheet_after_leave)$"))
-#
-#    application.run_polling()
-
-#NEW MAIN begins here
-# ✅ **Main Function with All Handlers**
-#def main():
-#    application = Application.builder().token(BOT_TOKEN).build()
-#
-#    # ✅ Primary Commands
-#    application.add_handler(CommandHandler("start", start))
-#
-#    # ✅ CallbackQuery Handlers
-#    application.add_handler(CallbackQueryHandler(month_handler, pattern="^month_"))
-#    application.add_handler(CallbackQueryHandler(apply_leave, pattern="^apply_leave$"))
-#    application.add_handler(CallbackQueryHandler(leave_type_handler, pattern="^leave_"))
-#    application.add_handler(CallbackQueryHandler(start_date_handler, pattern="^start_date_"))
-#    application.add_handler(CallbackQueryHandler(end_date_handler, pattern="^end_date_"))
-#    application.add_handler(CallbackQueryHandler(generate_timesheet, pattern="^(generate_timesheet_now|generate_timesheet_after_leave)$"))
-#
-#    # ✅ Capture Registration Data (Handles text input)
-#    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, capture_user_details))
-#
-#    application.run_polling()
-
-#def main():
-#    application = Application.builder().token(BOT_TOKEN).build()
-#
-#    application.add_handler(CommandHandler("start", start))
-#    application.add_handler(CommandHandler("register", register_new_user))
-#    application.add_handler(CommandHandler("capture", capture_user_details))
-#    application.add_handler(CallbackQueryHandler(month_handler, pattern="^month_"))
-#    application.add_handler(CallbackQueryHandler(apply_leave, pattern="^apply_leave$"))
-#    application.add_handler(CallbackQueryHandler(leave_type_handler, pattern="^leave_"))
-#    application.add_handler(CallbackQueryHandler(start_date_handler, pattern="^start_date_"))
-#    application.add_handler(CallbackQueryHandler(end_date_handler, pattern="^end_date_"))
-#    application.add_handler(CallbackQueryHandler(generate_timesheet, pattern="^(generate_timesheet_now|generate_timesheet_after_leave)$"))
-#
-#    application.run_polling()
-
-# LATEST main attempt:
-#def main():
-#    application = Application.builder().token(BOT_TOKEN).build()
-#
-#    application.add_handler(CommandHandler("start", start))
-#    application.add_handler(CommandHandler("register", register_new_user))
-#
-#    # ✅ Add MessageHandler to capture user input during registration
-#    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, capture_user_details))
-#
-#    application.add_handler(CallbackQueryHandler(month_handler, pattern="^month_"))
-#    application.add_handler(CallbackQueryHandler(apply_leave, pattern="^apply_leave$"))
-#    application.add_handler(CallbackQueryHandler(leave_type_handler, pattern="^leave_"))
-#    application.add_handler(CallbackQueryHandler(start_date_handler, pattern="^start_date_"))
-#    application.add_handler(CallbackQueryHandler(end_date_handler, pattern="^end_date_"))
-#    application.add_handler(
-#        CallbackQueryHandler(generate_timesheet, pattern="^(generate_timesheet_now|generate_timesheet_after_leave)$"))
-#
-#    application.run_polling()
-
-
-# ✅ Add this to `main()` in bot.py
+# main function in bot.py
 def main():
     application = Application.builder().token(BOT_TOKEN).build()
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("register", register_new_user))
 
-    # ✅ Add MessageHandler to capture user input during registration
+    # Add MessageHandler to capture user input during registration
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, capture_user_details))
 
-    # ✅ Fix: Add CallbackQueryHandler for handling quick-select buttons
-    #application.add_handler(CallbackQueryHandler(handle_registration_buttons, pattern="^(skill_level|role_specialization|contractor)_"))
+    # Fix: Add CallbackQueryHandler for handling quick-select buttons
     application.add_handler(
         CallbackQueryHandler(handle_registration_buttons, pattern="^(skill_level|role_specialization|contractor)_.+"))
-
-    #application.add_handler(
-    #    CallbackQueryHandler(handle_registration_buttons, pattern="^(skill_level|role_specialization|contractor)_.+"))
 
     application.add_handler(CallbackQueryHandler(month_handler, pattern="^month_"))
     application.add_handler(CallbackQueryHandler(apply_leave, pattern="^apply_leave$"))
