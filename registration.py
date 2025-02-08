@@ -3,7 +3,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from utils.utils import load_user_details, save_user_data
 import re
-
+from security import sanitize_input
 # Function to sanitize user input
 # def sanitize_input(user_input):
 #     """Sanitize user input to prevent injection attacks."""
@@ -20,20 +20,40 @@ import re
 #         return re.sub(r"[^\w\s.,/-]", "", user_input.strip())[:200]
 
 
-def sanitize_input(user_input, allow_brackets=False, max_words=5):
-    """Sanitize user input to prevent injection attacks, enforce word limits, and optionally allow brackets."""
+# def sanitize_input(user_input, allow_brackets=False, max_words=5):
+#     """Sanitize user input to prevent injection attacks, enforce word limits, and optionally allow brackets."""
+#
+#     # Remove unwanted characters
+#     if allow_brackets:
+#         sanitized_text = re.sub(r"[^\w\s.,()/-]", "", user_input.strip())  # Keep (, )
+#     else:
+#         sanitized_text = re.sub(r"[^\w\s.,/-]", "", user_input.strip())  # Remove (, )
+#
+#     # Limit to the maximum number of words
+#     words = sanitized_text.split()
+#     sanitized_text = " ".join(words[:max_words])  # Restrict word count
+#
+#     return sanitized_text
 
-    # Remove unwanted characters
-    if allow_brackets:
-        sanitized_text = re.sub(r"[^\w\s.,()/-]", "", user_input.strip())  # Keep (, )
-    else:
-        sanitized_text = re.sub(r"[^\w\s.,/-]", "", user_input.strip())  # Remove (, )
+# def sanitize_input(user_input, allow_brackets=False, max_words=5):
+#     """Sanitize user input to prevent injection attacks, enforce word limits, and optionally allow brackets."""
+#
+#     # ✅ Remove unwanted characters
+#     if allow_brackets:
+#         sanitized_text = re.sub(r"[^\w\s.,()/-]", "", user_input.strip())  # Allow (, )
+#     else:
+#         sanitized_text = re.sub(r"[^\w\s.,/-]", "", user_input.strip())  # Remove (, )
+#
+#     # ✅ Prevent SQL Injection: Remove semicolons, multiple spaces
+#     sanitized_text = re.sub(r";", "", sanitized_text)  # Remove SQL Injection attempt
+#     sanitized_text = re.sub(r"\s+", " ", sanitized_text)  # Normalize spaces
+#
+#     # ✅ Enforce Maximum Words
+#     words = sanitized_text.split()
+#     sanitized_text = " ".join(words[:max_words])  # Restrict word count
+#
+#     return sanitized_text
 
-    # Limit to the maximum number of words
-    words = sanitized_text.split()
-    sanitized_text = " ".join(words[:max_words])  # Restrict word count
-
-    return sanitized_text
 
 # Function to register a new user
 async def register_new_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -73,10 +93,19 @@ async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYP
     if user_id not in user_details:
         user_details[user_id] = {}
 
+    # sanitized_message = sanitize_input(
+    #     user_message,
+    #     allow_brackets=(step in ["description", "role_specialization", "group_specialization", "contractor"]),
+    #     # Allow brackets only for specific fields
+    #     max_words=30 if step == "description" else 10 if step == "name" else 5,
+    #     # Description gets 30 words, Name gets 10, others get 5
+    #     block_numbers=(step in ["name", "reporting_officer"])  # Block numbers in Name and Reporting Officer
+    # )
     sanitized_message = sanitize_input(
         user_message,
-        allow_brackets=(step in ["description", "role_specialization", "group_specialization", "contractor"]),  # Only allow brackets for description
-        max_words=30 if step == "description" else 10 if step == "name" else 5  # Limit description to 30 words, Name to 10 words others to 5
+        allow_brackets=(step in ["description", "role_specialization", "group_specialization", "contractor"]),
+        max_words=30 if step == "description" else 10 if step == "name" else 5,
+        clean_numbers=(step in ["name", "reporting_officer"])  # Remove numbers in Name & Reporting Officer
     )
 
     if step == "name":
