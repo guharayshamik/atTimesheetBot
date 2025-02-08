@@ -93,14 +93,6 @@ async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYP
     if user_id not in user_details:
         user_details[user_id] = {}
 
-    # sanitized_message = sanitize_input(
-    #     user_message,
-    #     allow_brackets=(step in ["description", "role_specialization", "group_specialization", "contractor"]),
-    #     # Allow brackets only for specific fields
-    #     max_words=30 if step == "description" else 10 if step == "name" else 5,
-    #     # Description gets 30 words, Name gets 10, others get 5
-    #     block_numbers=(step in ["name", "reporting_officer"])  # Block numbers in Name and Reporting Officer
-    # )
     sanitized_message = sanitize_input(
         user_message,
         allow_brackets=(step in ["description", "role_specialization", "group_specialization", "contractor"]),

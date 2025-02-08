@@ -9,6 +9,7 @@ from timesheet_generator import generate_timesheet_excel
 from telegram.ext import MessageHandler, filters  # Add MessageHandler and filters
 from utils.utils import PUBLIC_HOLIDAYS, load_user_details # Load dynamically
 from registration import register_new_user, capture_user_details, handle_registration_buttons  # Import the missing function
+from de_registration import confirm_deregistration, handle_deregistration_buttons
 
 
 # Load environment variables
@@ -310,6 +311,11 @@ def main():
     application.add_handler(CallbackQueryHandler(end_date_handler, pattern="^end_date_"))
     application.add_handler(
         CallbackQueryHandler(generate_timesheet, pattern="^(generate_timesheet_now|generate_timesheet_after_leave)$"))
+
+    #De-registration handlers
+    application.add_handler(CommandHandler("reset", confirm_deregistration))
+    application.add_handler(CommandHandler("deregister", confirm_deregistration))
+    application.add_handler(CallbackQueryHandler(handle_deregistration_buttons, pattern="^deregister_"))
 
     application.run_polling()
 
