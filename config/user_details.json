@@ -20,5 +20,16 @@
         "po_date": "1 May 24 - 30",
         "description": "Agile Co-Development Services",
         "reporting_officer": "John Doe"
+    },
+    "7032290213": {
+        "name": "Shamik Guha Ray",
+        "skill_level": "Professional",
+        "role_specialization": "DevOps Engineer - II",
+        "group_specialization": "Consulting",
+        "contractor": "PALO IT",
+        "po_ref": "GVT000ECI24000829",
+        "po_date": "1 May 24 - 30 Apr 25",
+        "description": "To engage Agile Co-Development and ICT Professional Services via 19024 bulk tender (PR230941)",
+        "reporting_officer": "Deepu Joseph"
     }
 }

@@ -67,7 +67,7 @@ async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYP
             [InlineKeyboardButton("Expert", callback_data="skill_level_Expert")]
         ]
         reply_markup = InlineKeyboardMarkup(buttons)
-        await update.message.reply_text("↘️ Tap a button to enter your Skill Level:", reply_markup=reply_markup)
+        await update.message.reply_text("↘️ Choose from below to add your Skill Level:", reply_markup=reply_markup)
 
     elif step == "role_specialization":
         user_details[user_id]["role_specialization"] = sanitized_message
