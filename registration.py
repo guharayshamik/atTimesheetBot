@@ -34,7 +34,10 @@ async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYP
     step = context.user_data.get("registration_step")
 
     if not step:
-        await update.message.reply_text("❌ Registration error. Please type /start to retry.")
+        await update.message.reply_text(
+            "❌ Registration error. Please type /start to retry.\n\n"
+            "To correct or remove your data and reregister, use /reset or /deregister."
+        )
         return
 
     # Load latest user details before modifying
@@ -122,7 +125,11 @@ async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYP
         save_user_data(user_details)  # Save final data
 
         logging.info(f"User {user_id} completed registration: {user_details[user_id]}")
-        await update.message.reply_text("✅ Registration complete! Type /start to begin using the bot.")
+        await update.message.reply_text(
+            "✅ Registration complete! \n\n"
+            "Type /start to begin using the bot.\n\n"
+            "If you wish to remove your data and reregister, use /reset or /deregister."
+        )
 
 
 
