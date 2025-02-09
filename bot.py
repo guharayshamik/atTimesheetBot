@@ -12,6 +12,7 @@ from registration import register_new_user, capture_user_details, handle_registr
 from de_registration import confirm_deregistration, handle_deregistration_buttons
 
 
+
 # Load environment variables
 load_dotenv()
 
@@ -105,7 +106,7 @@ async def leave_type_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     await show_start_date_selection(update, context)
 
-# Show Start Date Selection
+# Show START DATE Selection
 async def show_start_date_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -122,9 +123,9 @@ async def show_start_date_selection(update: Update, context: ContextTypes.DEFAUL
     ]
 
     reply_markup = InlineKeyboardMarkup(buttons)
-    await query.message.reply_text("Select the **Start Date** for your leave:", reply_markup=reply_markup)
+    await query.message.reply_text("Select the START DATE for your leave:", reply_markup=reply_markup)
 
-# Handle Start Date Selection
+# Handle START DATE Selection
 async def start_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -133,7 +134,7 @@ async def start_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
         # Ensure callback data has the correct format: start_date_6-June
         callback_data = query.data
         if not callback_data.startswith("start_date_"):
-            logger.error(f"Invalid start date callback data: {callback_data}")
+            logger.error(f"Invalid START DATE callback data: {callback_data}")
             await query.message.reply_text("Error: Invalid date format received. Please restart.")
             return
 
@@ -143,10 +144,10 @@ async def start_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
         # Store the valid date in context
         context.user_data["start_date"] = selected_start_date
-        logger.info(f"User selected start date: {selected_start_date}")
+        logger.info(f"User selected START DATE: {selected_start_date}")
         print("selected_start_date chosen by user", selected_start_date)
 
-        # Move to End Date selection
+        # Move to END DATE selection
         await show_end_date_selection(update, context)
 
     except ValueError:
@@ -154,7 +155,7 @@ async def start_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
         await query.message.reply_text("Error: Selected date format is incorrect. Please try again.")
 
 
-# Show End Date Selection ( FIXED MISSING FUNCTION )
+# Show END DATE Selection ( FIXED MISSING FUNCTION )
 async def show_end_date_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -171,9 +172,10 @@ async def show_end_date_selection(update: Update, context: ContextTypes.DEFAULT_
     ]
 
     reply_markup = InlineKeyboardMarkup(buttons)
-    await query.message.reply_text("Select the **End Date** for your leave:", reply_markup=reply_markup)
+    await query.message.reply_text("Select the END DATE for your leave:", reply_markup=reply_markup)
 
-# Handle End Date Selection
+
+# Handle END DATE Selection
 async def end_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -182,13 +184,13 @@ async def end_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Ensure callback data has the correct format: end_date_6-June
         callback_data = query.data
         if not callback_data.startswith("end_date_"):
-            logger.error(f"Invalid end date callback data: {callback_data}")
+            logger.error(f"Invalid END DATE callback data: {callback_data}")
             await query.message.reply_text("Error: Invalid date format received. Please restart.")
             return
 
         # Extract and validate the date
         selected_end_date = callback_data.replace("end_date_", "")
-        datetime.strptime(selected_end_date, "%d-%B")  # Validate format
+        end_date_obj = datetime.strptime(selected_end_date, "%d-%B")  # Convert to datetime object
 
         user_id = str(update.effective_user.id)
         month = context.user_data.get("month")
@@ -199,9 +201,21 @@ async def end_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.message.reply_text("Error: Missing leave details. Please restart.")
             return
 
-        # Fix: Validate date format before storing
+        # Convert START DATE to datetime object
         start_date_obj = datetime.strptime(start_date, "%d-%B")
-        end_date_obj = datetime.strptime(selected_end_date, "%d-%B")
+
+        # **Validation: Check if START DATE is greater than END DATE**
+        if start_date_obj > end_date_obj:
+            logger.warning(f"User {user_id} entered invalid date range: Start {start_date}, End {selected_end_date}")
+            await query.message.reply_text(
+                "⚠️ Invalid Date Range!\n\nThe START DATE cannot be later than the END DATE. "
+                "Please select the correct dates again."
+            )
+        
+
+            # Prompt the user to reselect the dates
+            await show_start_date_selection(update, context)
+            return  # Stop further execution
 
         # Store properly formatted dates
         if user_id not in user_leaves:

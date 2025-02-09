@@ -91,7 +91,7 @@ async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYP
             [InlineKeyboardButton("Freelancer", callback_data="contractor_Freelancer")]
         ]
         reply_markup = InlineKeyboardMarkup(buttons)
-        await update.message.reply_text("↘️ Enter your Contractor or tap a button:", reply_markup=reply_markup)
+        await update.message.reply_text("↘️ Enter your Contractor or Tap a button:", reply_markup=reply_markup)
 
     elif step == "contractor":
         user_details[user_id]["contractor"] = sanitized_message
@@ -163,7 +163,7 @@ async def handle_registration_buttons(update: Update, context: ContextTypes.DEFA
         save_user_data(user_details)
 
         await query.message.reply_text(
-            f"✔️ Skill Level set to: {value}\n\n↘️ Enter your Role Specialization:\n\neg:\n"
+            f"✔️ Skill Level set to: {value}\n\n↘️ Enter your Role Specialization or Tap a button:\n\neg:\n"
             "```\nDevOps Engineer - II\n```"
             "```\nSoftware Engineer - III\n```"
             "```\nCloud Consultant\n```"
@@ -187,7 +187,7 @@ async def handle_registration_buttons(update: Update, context: ContextTypes.DEFA
         save_user_data(user_details)
 
         await query.message.reply_text(
-            f"✔️ Group Specialization set to: {value}\n\n↘️ Enter your Contractor or tap a button:",
+            f"✔️ Group Specialization set to: {value}\n\n↘️ Enter your Contractor or Tap a button:",
             parse_mode="MarkdownV2"
         )
 
