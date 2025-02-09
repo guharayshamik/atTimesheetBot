@@ -7,11 +7,10 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 from timesheet_generator import generate_timesheet_excel
 from telegram.ext import MessageHandler, filters  # Add MessageHandler and filters
-from utils.utils import PUBLIC_HOLIDAYS, load_user_details # Load dynamically
-from registration import register_new_user, capture_user_details, handle_registration_buttons  # Import the missing function
+from utils.utils import PUBLIC_HOLIDAYS, load_user_details  # Load dynamically
+from registration import register_new_user, capture_user_details, \
+    handle_registration_buttons  # Import the missing function
 from de_registration import confirm_deregistration, handle_deregistration_buttons
-
-
 
 # Load environment variables
 load_dotenv()
@@ -31,6 +30,7 @@ if not BOT_TOKEN:
 
 # In-memory storage for user inputs
 user_leaves = {}
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
@@ -52,7 +52,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup = InlineKeyboardMarkup(buttons)
 
         logger.info(f"User {name} ({user_id}) started the bot.")
-        await update.message.reply_text(f"Welcome back, {name}! Select a month for your timesheet:", reply_markup=reply_markup)
+        await update.message.reply_text(f"Welcome back, {name}! Select a month for your timesheet:",
+                                        reply_markup=reply_markup)
 
     else:
         logger.info(f"New user {user_id} detected. Redirecting to registration.")
@@ -73,7 +74,9 @@ async def month_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("Generate Timesheet Without Leave", callback_data="generate_timesheet_now")]
     ]
     reply_markup = InlineKeyboardMarkup(buttons)
-    await query.message.reply_text("Do you want to apply for leave before generating the timesheet?", reply_markup=reply_markup)
+    await query.message.reply_text("Do you want to apply for leave before generating the timesheet?",
+                                   reply_markup=reply_markup)
+
 
 # Handle Apply Leave
 async def apply_leave(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -81,6 +84,7 @@ async def apply_leave(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     logger.info("User selected 'Apply Leave' button.")  # Debugging log
     await show_leave_type_selection(update, context)
+
 
 # Show Leave Type Selection
 async def show_leave_type_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -95,6 +99,7 @@ async def show_leave_type_selection(update: Update, context: ContextTypes.DEFAUL
     reply_markup = InlineKeyboardMarkup(buttons)
     await query.message.reply_text("Please choose the leave type:", reply_markup=reply_markup)
 
+
 # Handle Leave Type Selection
 async def leave_type_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -105,6 +110,7 @@ async def leave_type_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
     logger.info(f"User selected leave type: {leave_type}")
 
     await show_start_date_selection(update, context)
+
 
 # Show START DATE Selection
 async def show_start_date_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -124,6 +130,7 @@ async def show_start_date_selection(update: Update, context: ContextTypes.DEFAUL
 
     reply_markup = InlineKeyboardMarkup(buttons)
     await query.message.reply_text("Select the START DATE for your leave:", reply_markup=reply_markup)
+
 
 # Handle START DATE Selection
 async def start_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -211,7 +218,6 @@ async def end_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "⚠️ Invalid Date Range!\n\nThe START DATE cannot be later than the END DATE. "
                 "Please select the correct dates again."
             )
-        
 
             # Prompt the user to reselect the dates
             await show_start_date_selection(update, context)
@@ -223,7 +229,8 @@ async def end_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if month not in user_leaves[user_id]:
             user_leaves[user_id][month] = []
 
-        user_leaves[user_id][month].append((start_date_obj.strftime("%d-%B"), end_date_obj.strftime("%d-%B"), leave_type))
+        user_leaves[user_id][month].append(
+            (start_date_obj.strftime("%d-%B"), end_date_obj.strftime("%d-%B"), leave_type))
         logger.info(f"Stored leave for {user_id}: {start_date} to {selected_end_date} ({leave_type})")
 
         buttons = [
@@ -304,6 +311,7 @@ async def generate_timesheet(update: Update, context: ContextTypes.DEFAULT_TYPE)
         logger.error(f"Error generating timesheet: {e}")
         await query.message.reply_text(f"Error generating timesheet: {e}")
 
+
 # main function in bot.py
 def main():
     application = Application.builder().token(BOT_TOKEN).build()
@@ -326,12 +334,13 @@ def main():
     application.add_handler(
         CallbackQueryHandler(generate_timesheet, pattern="^(generate_timesheet_now|generate_timesheet_after_leave)$"))
 
-    #De-registration handlers
+    # De-registration handlers
     application.add_handler(CommandHandler("reset", confirm_deregistration))
     application.add_handler(CommandHandler("deregister", confirm_deregistration))
     application.add_handler(CallbackQueryHandler(handle_deregistration_buttons, pattern="^deregister_"))
 
     application.run_polling()
+
 
 if __name__ == "__main__":
     main()
