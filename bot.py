@@ -31,29 +31,40 @@ if not BOT_TOKEN:
 # In-memory storage for user inputs
 user_leaves = {}
 
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
 
     # Reload user details dynamically
     USER_DETAILS = load_user_details()
-
     user_details = USER_DETAILS.get(user_id)
 
     if user_details:
         name = user_details["name"]
-        buttons = [
-            [InlineKeyboardButton(month, callback_data=f"month_{month}")]
-            for month in [
-                "January", "February", "March", "April", "May", "June",
-                "July", "August", "September", "October", "November", "December"
-            ]
+
+        # Months list without emojis
+        months = [
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
         ]
+
+        # Arrange buttons in rows of 3 months per row
+        buttons = [
+            [InlineKeyboardButton(months[i], callback_data=f"month_{months[i]}"),
+             InlineKeyboardButton(months[i + 1], callback_data=f"month_{months[i + 1]}"),
+             InlineKeyboardButton(months[i + 2], callback_data=f"month_{months[i + 2]}")]
+            for i in range(0, len(months), 3)
+        ]
+
         reply_markup = InlineKeyboardMarkup(buttons)
 
         logger.info(f"User {name} ({user_id}) started the bot.")
-        await update.message.reply_text(f"Welcome back, {name}! Select a month for your timesheet:",
-                                        reply_markup=reply_markup)
+
+        await update.message.reply_text(
+            f"👋 **Welcome back, {name}!**\n\n"
+            "📅 **Select a month for your timesheet:**",
+            reply_markup=reply_markup,
+            parse_mode="Markdown"
+        )
 
     else:
         logger.info(f"New user {user_id} detected. Redirecting to registration.")
@@ -70,12 +81,18 @@ async def month_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.info(f"User {update.effective_user.id} selected month: {selected_month}")
 
     buttons = [
-        [InlineKeyboardButton("Apply Leave", callback_data="apply_leave")],
-        [InlineKeyboardButton("Generate Timesheet Without Leave", callback_data="generate_timesheet_now")]
+        [InlineKeyboardButton("📝 Apply Leave", callback_data="apply_leave")],
+        [InlineKeyboardButton("📊 Generate Timesheet Without Leave", callback_data="generate_timesheet_now")]
     ]
     reply_markup = InlineKeyboardMarkup(buttons)
-    await query.message.reply_text("Do you want to apply for leave before generating the timesheet?",
-                                   reply_markup=reply_markup)
+
+    await query.message.reply_text(
+        f"📆 **You selected {selected_month}**\n\n"
+        "Would you like to apply for leave before generating your timesheet?",
+        reply_markup=reply_markup,
+        parse_mode="Markdown"
+    )
+
 
 
 # Handle Apply Leave
@@ -97,7 +114,12 @@ async def show_leave_type_selection(update: Update, context: ContextTypes.DEFAUL
         [InlineKeyboardButton("Annual Leave", callback_data="leave_Annual Leave")]
     ]
     reply_markup = InlineKeyboardMarkup(buttons)
-    await query.message.reply_text("Please choose the leave type:", reply_markup=reply_markup)
+    #await query.message.reply_text("Please choose the leave type:", reply_markup=reply_markup)
+    await query.message.reply_text(
+        "**Please choose the type of leave you want to apply for:**",
+        reply_markup=reply_markup,
+        parse_mode="Markdown"
+    )
 
 
 # Handle Leave Type Selection
@@ -113,30 +135,12 @@ async def leave_type_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 
 # Show START DATE Selection
-# async def show_start_date_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
-#     query = update.callback_query
-#     await query.answer()
-#
-#     month = context.user_data.get("month")
-#     year = datetime.now().year
-#     month_number = datetime.strptime(month, "%B").month
-#     _, days_in_month = monthrange(year, month_number)
-#
-#     buttons = [
-#         [InlineKeyboardButton(f"{day}-{month}", callback_data=f"start_date_{day}-{month}")
-#          for day in range(start, min(start + 7, days_in_month + 1))]
-#         for start in range(1, days_in_month + 1, 7)
-#     ]
-#
-#     reply_markup = InlineKeyboardMarkup(buttons)
-#     await query.message.reply_text("Select the START DATE for your leave:", reply_markup=reply_markup)
-#
-
 async def show_start_date_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
     month = context.user_data.get("month")
+    short_month = month[:3]  # Get short month format (e.g., "January" -> "Jan")
     year = datetime.now().year
     month_number = datetime.strptime(month, "%B").month
     _, days_in_month = monthrange(year, month_number)
@@ -144,7 +148,7 @@ async def show_start_date_selection(update: Update, context: ContextTypes.DEFAUL
     buttons = []
     row = []
     for day in range(1, days_in_month + 1):
-        row.append(InlineKeyboardButton(f"{day}-{month}", callback_data=f"start_date_{day}-{month}"))
+        row.append(InlineKeyboardButton(f"{day}-{short_month}", callback_data=f"start_date_{day}-{month}"))
         if len(row) == 5:  # Ensure 5 buttons per row for better visibility
             buttons.append(row)
             row = []
@@ -158,7 +162,6 @@ async def show_start_date_selection(update: Update, context: ContextTypes.DEFAUL
         reply_markup=reply_markup,
         parse_mode="Markdown"
     )
-
 
 
     # Handle START DATE Selection
@@ -192,29 +195,12 @@ async def start_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 
 # Show END DATE Selection ( FIXED MISSING FUNCTION )
-# async def show_end_date_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
-#     query = update.callback_query
-#     await query.answer()
-#
-#     month = context.user_data.get("month")
-#     year = datetime.now().year
-#     month_number = datetime.strptime(month, "%B").month
-#     _, days_in_month = monthrange(year, month_number)
-#
-#     buttons = [
-#         [InlineKeyboardButton(f"{day}-{month}", callback_data=f"end_date_{day}-{month}")
-#          for day in range(start, min(start + 7, days_in_month + 1))]
-#         for start in range(1, days_in_month + 1, 7)
-#     ]
-#
-#     reply_markup = InlineKeyboardMarkup(buttons)
-#     await query.message.reply_text("Select the END DATE for your leave:", reply_markup=reply_markup)
-
 async def show_end_date_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
     month = context.user_data.get("month")
+    short_month = month[:3]  # Convert "January" -> "Jan"
     year = datetime.now().year
     month_number = datetime.strptime(month, "%B").month
     _, days_in_month = monthrange(year, month_number)
@@ -222,8 +208,8 @@ async def show_end_date_selection(update: Update, context: ContextTypes.DEFAULT_
     buttons = []
     row = []
     for day in range(1, days_in_month + 1):
-        row.append(InlineKeyboardButton(f"{day}-{month}", callback_data=f"end_date_{day}-{month}"))
-        if len(row) == 5:  # Keep the button alignment consistent
+        row.append(InlineKeyboardButton(f"{day}-{short_month}", callback_data=f"end_date_{day}-{month}"))
+        if len(row) == 5:  # Ensure 5 buttons per row for better alignment
             buttons.append(row)
             row = []
 
@@ -236,6 +222,7 @@ async def show_end_date_selection(update: Update, context: ContextTypes.DEFAULT_
         reply_markup=reply_markup,
         parse_mode="Markdown"
     )
+
 
 # Handle END DATE Selection
 async def end_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -289,8 +276,8 @@ async def end_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.info(f"Stored leave for {user_id}: {start_date} to {selected_end_date} ({leave_type})")
 
         buttons = [
-            [InlineKeyboardButton("Yes, Add More Leaves", callback_data="apply_leave")],
-            [InlineKeyboardButton("No, Generate Timesheet", callback_data="generate_timesheet_after_leave")]
+            [InlineKeyboardButton("📝 Yes, Add More Leaves", callback_data="apply_leave")],
+            [InlineKeyboardButton("📊 No, Generate Timesheet", callback_data="generate_timesheet_after_leave")]
         ]
         reply_markup = InlineKeyboardMarkup(buttons)
         await query.message.reply_text("Do you want to add more leaves?", reply_markup=reply_markup)
