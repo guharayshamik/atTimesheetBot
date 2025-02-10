@@ -96,56 +96,159 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     #     ws[f"{col}1"].border = None
     #     ws[f"{col}1"].fill = None
 
-    # Header Section (PO Details) - Start from Row 2
+    # # Header Section (PO Details) - Start from Row 2
+    # ws["A2"], ws["B2"] = "Description", description
+    # ws["A3"], ws["B3"] = "PO Ref", po_ref
+    # ws["A4"], ws["B4"] = "PO Date", po_date
+    # ws["D2"], ws["E2"] = "Month/Year", f"{month_name} - {year}"
+    # ws["D3"], ws["E3"] = "Contractor", contractor
+    #
+    # # Apply Borders for Header Sections (Only from Row 2 onwards)
+    # for row in range(2, 5):  # Row 1 is skipped
+    #     for col in ["A", "B"]:
+    #         ws[f"{col}{row}"].border = thin_border  # Description to PO Date
+    # for row in range(2, 4):  # Row 1 is skipped
+    #     for col in ["D", "E"]:
+    #         ws[f"{col}{row}"].border = thin_border  # Month/Year to Contractor
+    #
+    # # Apply Yellow Fill and Center Alignment to Static Cells in Column B (Description, PO Ref, PO Date)
+    # for row in [2, 3, 4]:
+    #     cell = ws[f"B{row}"]
+    #     cell.fill = yellow_fill
+    #     cell.alignment = center_alignment
+    #
+    # # Apply Yellow Fill and Center Alignment to Column E (Month/Year)
+    # ws["E2"].fill = yellow_fill
+    # ws["E2"].alignment = center_alignment  # Removed redundant lines
+    #
+    # # Apply Center Alignment Only to E3 (Contractor)
+    # ws["E3"].alignment = center_alignment
+    #
+    # # Ensure Row 1 is left unformatted (No Border, No Yellow Fill)
+    # for col in ["A", "B", "C", "D", "E"]:
+    #     ws[f"{col}1"].border = Border()  # Reset border
+    #     ws[f"{col}1"].fill = PatternFill(fill_type=None)  # Ensure fill is removed
+    #
+    # # User Details
+    # ws["A6"], ws["B6"] = "Name", name
+    # ws["D6"], ws["E6"] = "Skill Level", skill_level
+    # ws["A7"], ws["B7"] = "Role Specialization", role_specialization
+    # ws["A8"], ws["B8"] = "Group/Specialization", group_specialization
+    #
+    # # Apply Yellow Fill to Static Cells in Columns B & E
+    # static_fields = ["B6", "B7", "B8", "E6"]  # Include all necessary fields
+    # for cell in static_fields:
+    #     ws[cell].fill = yellow_fill
+    #
+    #     # Apply Borders for User Details
+    #     for row in range(6, 9):
+    #         for col in ["A", "B"]:
+    #             ws[f"{col}{row}"].border = thin_border  # Name to Group
+    #     ws["D6"].border = thin_border  # Skill Level Label
+    #     ws["E6"].border = thin_border  # Skill Level Value
+
+    #LATEST MERGE CELL CHANGES
+    # Merge and Format Header Section (PO Details)
+    from openpyxl.styles import Alignment, PatternFill, Font, Border, Side
+
+    # Merge and Format Header Section (PO Details)
+    ws.merge_cells("B2:D2")  # Merge Description value
+    ws.merge_cells("B3:D3")  # Merge PO Ref value
+    ws.merge_cells("B4:D4")  # Merge PO Date value
+    ws.merge_cells("G2:H2")  # Merge Month/Year value
+    ws.merge_cells("G3:H3")  # Merge Contractor value
+
     ws["A2"], ws["B2"] = "Description", description
     ws["A3"], ws["B3"] = "PO Ref", po_ref
     ws["A4"], ws["B4"] = "PO Date", po_date
-    ws["D2"], ws["E2"] = "Month/Year", f"{month_name} - {year}"
-    ws["D3"], ws["E3"] = "Contractor", contractor
+    ws["F2"], ws["G2"] = "Month/Year", f"{month_name} - {year}"
+    ws["F3"], ws["G3"] = "Contractor", contractor
 
-    # Apply Borders for Header Sections (Only from Row 2 onwards)
-    for row in range(2, 5):  # Row 1 is skipped
-        for col in ["A", "B"]:
-            ws[f"{col}{row}"].border = thin_border  # Description to PO Date
-    for row in range(2, 4):  # Row 1 is skipped
-        for col in ["D", "E"]:
-            ws[f"{col}{row}"].border = thin_border  # Month/Year to Contractor
+    # Apply Borders for Header Sections
+    for row in range(2, 5):  # A-D Borders for Description, PO Ref, PO Date
+        for col in ["A", "B", "C", "D"]:
+            ws[f"{col}{row}"].border = thin_border
 
-    # Apply Yellow Fill and Center Alignment to Static Cells in Column B (Description, PO Ref, PO Date)
-    for row in [2, 3, 4]:
-        cell = ws[f"B{row}"]
-        cell.fill = yellow_fill
-        cell.alignment = center_alignment
+    for row in range(2, 4):  # F-H Borders for Month/Year and Contractor
+        for col in ["F", "G", "H"]:
+            ws[f"{col}{row}"].border = thin_border
 
-    # Apply Yellow Fill and Center Alignment to Column E (Month/Year)
-    ws["E2"].fill = yellow_fill
-    ws["E2"].alignment = center_alignment  # Removed redundant lines
+    # Apply Borders for Month/Year (Fully Inside a Box)
+    for col in ["F", "G", "H"]:
+        ws[f"{col}2"].border = thin_border
 
-    # Apply Center Alignment Only to E3 (Contractor)
-    ws["E3"].alignment = center_alignment
+    # Apply Yellow Fill to Values Only (B-D, G-H)
+    for row in range(2, 5):
+        for col in ["B", "C", "D"]:
+            ws[f"{col}{row}"].fill = yellow_fill  # Apply to Description, PO Ref, PO Date
 
-    # Ensure Row 1 is left unformatted (No Border, No Yellow Fill)
-    for col in ["A", "B", "C", "D", "E"]:
-        ws[f"{col}1"].border = Border()  # Reset border
-        ws[f"{col}1"].fill = PatternFill(fill_type=None)  # Ensure fill is removed
+    for row in range(2, 4):
+        for col in ["G", "H"]:
+            ws[f"{col}{row}"].fill = yellow_fill  # Apply to Month/Year and Contractor
 
-    # User Details
+    # Ensure Column E is empty (No Borders, No Fill)
+    for row in range(2, 5):
+        ws[f"E{row}"].border = Border()
+        ws[f"E{row}"].fill = PatternFill(fill_type=None)
+
+    # **Apply Bottom Alignment for Values (B-D)**
+    for row in range(2, 5):
+        for col in ["B", "C", "D"]:
+            ws[f"{col}{row}"].alignment = Alignment(horizontal="center", vertical="bottom")
+
+    # **Keep Column A Left-Aligned**
+    for row in range(2, 5):
+        ws[f"A{row}"].alignment = Alignment(horizontal="left", vertical="bottom")
+
+    # **Apply Center Alignment for Skill Level, Contractor, and Month/Year Values**
+    for row in [2, 3, 6]:  # Month/Year, Contractor, Skill Level
+        for col in ["G", "H"]:
+            ws[f"{col}{row}"].alignment = Alignment(horizontal="center", vertical="bottom")
+
+    # **Wrap Text for Description (B2:D2)**
+    for col in ["B", "C", "D"]:
+        ws[f"{col}2"].alignment = Alignment(horizontal="center", vertical="bottom", wrap_text=True)
+        ws[f"{col}2"].font = Font(bold=False)  # Ensure text is not bold
+
+    # Merge and Format User Details
+    ws.merge_cells("B6:D6")  # Merge Name
+    ws.merge_cells("B7:D7")  # Merge Role Specialization
+    ws.merge_cells("B8:D8")  # Merge Group Specialization
+    ws.merge_cells("G6:H6")  # Merge Skill Level
+
     ws["A6"], ws["B6"] = "Name", name
-    ws["D6"], ws["E6"] = "Skill Level", skill_level
     ws["A7"], ws["B7"] = "Role Specialization", role_specialization
     ws["A8"], ws["B8"] = "Group/Specialization", group_specialization
+    ws["F6"], ws["G6"] = "Skill Level", skill_level
 
-    # Apply Yellow Fill to Static Cells in Columns B & E
-    static_fields = ["B6", "B7", "B8", "E6"]  # Include all necessary fields
-    for cell in static_fields:
-        ws[cell].fill = yellow_fill
+    # Apply Borders for User Details
+    for row in range(6, 9):  # A-D Borders for Name, Role Specialization, Group
+        for col in ["A", "B", "C", "D"]:
+            ws[f"{col}{row}"].border = thin_border
 
-        # Apply Borders for User Details
-        for row in range(6, 9):
-            for col in ["A", "B"]:
-                ws[f"{col}{row}"].border = thin_border  # Name to Group
-        ws["D6"].border = thin_border  # Skill Level Label
-        ws["E6"].border = thin_border  # Skill Level Value
+    for row in [6]:  # F-H Borders for Skill Level
+        for col in ["F", "G", "H"]:
+            ws[f"{col}{row}"].border = thin_border
+
+    # Apply Yellow Fill to Values Only (B-D, G-H)
+    for row in range(6, 9):
+        for col in ["B", "C", "D"]:
+            ws[f"{col}{row}"].fill = yellow_fill  # Name, Role, Group
+
+    for row in [6]:
+        for col in ["G", "H"]:
+            ws[f"{col}{row}"].fill = yellow_fill  # Skill Level
+
+    # Ensure Column E is empty (No Borders, No Fill)
+    for row in range(6, 9):
+        ws[f"E{row}"].border = Border()
+        ws[f"E{row}"].fill = PatternFill(fill_type=None)
+
+    # **Left Align Name, Role Specialization, Group Specialization Values**
+    for row in range(6, 9):
+        ws[f"B{row}"].alignment = Alignment(horizontal="left", vertical="bottom")  # Left align
+
+    print("✅ Final formatting and bottom alignment applied successfully!")
 
     # Table Headers
     headers = ["SN", "Date", "At Work", "Public Holiday", "Sick Leave", "Childcare Leave", "Annual Leave", "Remarks"]
