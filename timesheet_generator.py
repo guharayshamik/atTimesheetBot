@@ -182,9 +182,13 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
         for col in ["B", "C", "D"]:
             ws[f"{col}{row}"].fill = yellow_fill  # Apply to Description, PO Ref, PO Date
 
-    for row in range(2, 4):
-        for col in ["G", "H"]:
-            ws[f"{col}{row}"].fill = yellow_fill  # Apply to Month/Year and Contractor
+    # Apply Yellow Fill ONLY to Month/Year (G2:H2)
+    for col in ["G", "H"]:
+        ws[f"{col}2"].fill = yellow_fill
+
+        # Ensure Contractor (G3:H3) is NOT Yellow
+    for col in ["G", "H"]:
+        ws[f"{col}3"].fill = PatternFill(fill_type=None)  # Remove yellow fill
 
     # Ensure Column E is empty (No Borders, No Fill)
     for row in range(2, 5):
@@ -413,30 +417,109 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     ws[f"H{current_row}"].border = thin_border
 
     #current_row += 1 # Add an extra space
+    # # **Signature Section**
+    # current_date = datetime.now().strftime("%d - %B - %Y")
+    # ws[f"A{current_row + 2}"] = "Officer"
+    # ws[f"B{current_row + 2}"] = name
+    # ws[f"A{current_row + 3}"] = "Signature"
+    # ws[f"B{current_row + 3}"] = name
+    # ws[f"A{current_row + 4}"] = "Date"
+    # ws[f"B{current_row + 4}"] = current_date
+    #
+    # ws[f"A{current_row + 6}"] = "Reporting Officer"
+    # ws[f"B{current_row + 6}"] = reporting_officer
+    # ws[f"A{current_row + 7}"] = "Signature"
+    # ws[f"B{current_row + 7}"] = ""  # Leave Empty for Manager
+    # ws[f"A{current_row + 8}"] = "Date"
+    # ws[f"B{current_row + 8}"] = ""  # Leave Empty for Manager
+    #
+    # # Apply Borders to All Fields (Columns A & B)
+    # for row in range(current_row + 2, current_row + 9):  # Covers Officer + Reporting Officer sections
+    #     ws[f"A{row}"].border = thin_border
+    #     ws[f"B{row}"].border = thin_border
+    # for row in [current_row + 2, current_row + 3, current_row + 4, current_row + 6]:
+    #     ws[f"B{row}"].alignment = center_alignment
+
+    # NEW SIGNATURE SECTION:
     # **Signature Section**
-    current_date = datetime.now().strftime("%d - %B - %Y")
-    ws[f"A{current_row + 2}"] = "Officer"
-    ws[f"B{current_row + 2}"] = name
-    ws[f"A{current_row + 3}"] = "Signature"
-    ws[f"B{current_row + 3}"] = name
-    ws[f"A{current_row + 4}"] = "Date"
-    ws[f"B{current_row + 4}"] = current_date
+    # current_date = datetime.now().strftime("%d - %B - %Y")
+    #
+    # # Merge Officer Fields Across B, C, D
+    # ws.merge_cells(f"B{current_row + 2}:D{current_row + 2}")  # Officer Name
+    # ws.merge_cells(f"B{current_row + 3}:D{current_row + 3}")  # Officer Signature
+    # ws.merge_cells(f"B{current_row + 4}:D{current_row + 4}")  # Officer Date
+    #
+    # # Merge Reporting Officer Fields Across B, C, D
+    # ws.merge_cells(f"B{current_row + 6}:D{current_row + 6}")  # Reporting Officer Name
+    # ws.merge_cells(f"B{current_row + 7}:D{current_row + 7}")  # Empty Signature Field
+    # ws.merge_cells(f"B{current_row + 8}:D{current_row + 8}")  # Empty Date Field
+    #
+    # # Assign Values
+    # ws[f"A{current_row + 2}"], ws[f"B{current_row + 2}"] = "Officer", name
+    # ws[f"A{current_row + 3}"], ws[f"B{current_row + 3}"] = "Signature", name
+    # ws[f"A{current_row + 4}"], ws[f"B{current_row + 4}"] = "Date", current_date
+    #
+    # ws[f"A{current_row + 6}"], ws[f"B{current_row + 6}"] = "Reporting Officer", reporting_officer
+    # ws[f"A{current_row + 7}"], ws[f"B{current_row + 7}"] = "Signature", ""  # Leave Empty for Manager
+    # ws[f"A{current_row + 8}"], ws[f"B{current_row + 8}"] = "Date", ""  # Leave Empty for Manager
+    #
+    # # Apply Borders to A-D
+    # for row in range(current_row + 2, current_row + 9):  # Covers Officer + Reporting Officer sections
+    #     for col in ["A", "B", "C", "D"]:
+    #         ws[f"{col}{row}"].border = thin_border
+    #
+    # # **Apply Bottom Alignment**
+    # for row in range(current_row + 2, current_row + 9):
+    #     for col in ["A", "B", "C", "D"]:
+    #         ws[f"{col}{row}"].alignment = Alignment(horizontal="center", vertical="bottom")
+    #
+    #         # Keep A Column Left-Aligned
+    # for row in range(current_row + 2, current_row + 9):
+    #     ws[f"A{row}"].alignment = Alignment(horizontal="left", vertical="bottom")
+    #
+    # print("✅ Signature section formatted successfully!")
 
-    ws[f"A{current_row + 6}"] = "Reporting Officer"
-    ws[f"B{current_row + 6}"] = reporting_officer
-    ws[f"A{current_row + 7}"] = "Signature"
-    ws[f"B{current_row + 7}"] = ""  # Leave Empty for Manager
-    ws[f"A{current_row + 8}"] = "Date"
-    ws[f"B{current_row + 8}"] = ""  # Leave Empty for Manager
+    # **Signature Section**
+    current_date = datetime.now().strftime("%d - %b - %Y")  # Ensure proper formatting before writing to Excel
 
-    # Apply Borders to All Fields (Columns A & B)
+    # Merge Officer Fields Across B, C, D
+    ws.merge_cells(f"B{current_row + 2}:D{current_row + 2}")  # Officer Name
+    ws.merge_cells(f"B{current_row + 3}:D{current_row + 3}")  # Officer Signature
+    ws.merge_cells(f"B{current_row + 4}:D{current_row + 4}")  # Officer Date
+
+    # Merge Reporting Officer Fields Across B, C, D
+    ws.merge_cells(f"B{current_row + 6}:D{current_row + 6}")  # Reporting Officer Name
+    ws.merge_cells(f"B{current_row + 7}:D{current_row + 7}")  # Empty Signature Field
+    ws.merge_cells(f"B{current_row + 8}:D{current_row + 8}")  # Empty Date Field
+
+    # Assign Values
+    ws[f"A{current_row + 2}"], ws[f"B{current_row + 2}"] = "Officer", name
+    ws[f"A{current_row + 3}"], ws[f"B{current_row + 3}"] = "Signature", name
+    ws[f"A{current_row + 4}"], ws[f"B{current_row + 4}"] = "Date", current_date  # Date formatted
+
+    ws[f"A{current_row + 6}"], ws[f"B{current_row + 6}"] = "Reporting Officer", reporting_officer
+    ws[f"A{current_row + 7}"], ws[f"B{current_row + 7}"] = "Signature", ""  # Leave Empty for Manager
+    ws[f"A{current_row + 8}"], ws[f"B{current_row + 8}"] = "Date", ""  # Leave Empty for Manager
+
+    # **Apply Date Formatting**
+    ws[f"B{current_row + 4}"].number_format = "DD - MMM - YYYY"  # Ensure date appears correctly
+    ws[f"B{current_row + 8}"].number_format = "DD - MMM - YYYY"  # Format empty date field
+
+    # Apply Borders to A-D
     for row in range(current_row + 2, current_row + 9):  # Covers Officer + Reporting Officer sections
-        ws[f"A{row}"].border = thin_border
-        ws[f"B{row}"].border = thin_border
-    for row in [current_row + 2, current_row + 3, current_row + 4, current_row + 6]:
-        ws[f"B{row}"].alignment = center_alignment
+        for col in ["A", "B", "C", "D"]:
+            ws[f"{col}{row}"].border = thin_border
 
-        # **Save File**
+    # **Apply Bottom Alignment**
+    for row in range(current_row + 2, current_row + 9):
+        for col in ["A", "B", "C", "D"]:
+            ws[f"{col}{row}"].alignment = Alignment(horizontal="center", vertical="bottom")
+
+    # Keep A Column Left-Aligned
+    for row in range(current_row + 2, current_row + 9):
+        ws[f"A{row}"].alignment = Alignment(horizontal="left", vertical="bottom")
+
+    # **Save File**
     wb.save(output_file)
     print(f"Timesheet saved -> {output_file}")
     return output_file
