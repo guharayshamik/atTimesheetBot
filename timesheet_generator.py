@@ -735,6 +735,12 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
             max_length = max(len(str(cell.value or "")) for cell in col)
             ws.column_dimensions[col_letter].width = min(max_length + 2, 20)  # Prevent over-expansion
 
+    # Adjust the Remarks column (H) width based on the largest text in any column (A to H)
+    ws.column_dimensions["H"].width = max(
+        len(str(cell.value)) for row in ws.iter_rows(min_row=11, max_row=11 + days_in_month, min_col=1, max_col=8) for
+        cell in row) + 2
+
+
     # **Save File**
     wb.save(output_file)
     print(f"Timesheet saved -> {output_file}")
