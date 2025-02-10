@@ -113,6 +113,25 @@ async def leave_type_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 
 # Show START DATE Selection
+# async def show_start_date_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
+#     query = update.callback_query
+#     await query.answer()
+#
+#     month = context.user_data.get("month")
+#     year = datetime.now().year
+#     month_number = datetime.strptime(month, "%B").month
+#     _, days_in_month = monthrange(year, month_number)
+#
+#     buttons = [
+#         [InlineKeyboardButton(f"{day}-{month}", callback_data=f"start_date_{day}-{month}")
+#          for day in range(start, min(start + 7, days_in_month + 1))]
+#         for start in range(1, days_in_month + 1, 7)
+#     ]
+#
+#     reply_markup = InlineKeyboardMarkup(buttons)
+#     await query.message.reply_text("Select the START DATE for your leave:", reply_markup=reply_markup)
+#
+
 async def show_start_date_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -122,17 +141,27 @@ async def show_start_date_selection(update: Update, context: ContextTypes.DEFAUL
     month_number = datetime.strptime(month, "%B").month
     _, days_in_month = monthrange(year, month_number)
 
-    buttons = [
-        [InlineKeyboardButton(f"{day}-{month}", callback_data=f"start_date_{day}-{month}")
-         for day in range(start, min(start + 7, days_in_month + 1))]
-        for start in range(1, days_in_month + 1, 7)
-    ]
+    buttons = []
+    row = []
+    for day in range(1, days_in_month + 1):
+        row.append(InlineKeyboardButton(f"{day}-{month}", callback_data=f"start_date_{day}-{month}"))
+        if len(row) == 5:  # Ensure 5 buttons per row for better visibility
+            buttons.append(row)
+            row = []
+
+    if row:
+        buttons.append(row)
 
     reply_markup = InlineKeyboardMarkup(buttons)
-    await query.message.reply_text("Select the START DATE for your leave:", reply_markup=reply_markup)
+    await query.message.reply_text(
+        "📆 **Select the START DATE for your leave:**",
+        reply_markup=reply_markup,
+        parse_mode="Markdown"
+    )
 
 
-# Handle START DATE Selection
+
+    # Handle START DATE Selection
 async def start_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -163,6 +192,24 @@ async def start_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 
 # Show END DATE Selection ( FIXED MISSING FUNCTION )
+# async def show_end_date_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
+#     query = update.callback_query
+#     await query.answer()
+#
+#     month = context.user_data.get("month")
+#     year = datetime.now().year
+#     month_number = datetime.strptime(month, "%B").month
+#     _, days_in_month = monthrange(year, month_number)
+#
+#     buttons = [
+#         [InlineKeyboardButton(f"{day}-{month}", callback_data=f"end_date_{day}-{month}")
+#          for day in range(start, min(start + 7, days_in_month + 1))]
+#         for start in range(1, days_in_month + 1, 7)
+#     ]
+#
+#     reply_markup = InlineKeyboardMarkup(buttons)
+#     await query.message.reply_text("Select the END DATE for your leave:", reply_markup=reply_markup)
+
 async def show_end_date_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -172,15 +219,23 @@ async def show_end_date_selection(update: Update, context: ContextTypes.DEFAULT_
     month_number = datetime.strptime(month, "%B").month
     _, days_in_month = monthrange(year, month_number)
 
-    buttons = [
-        [InlineKeyboardButton(f"{day}-{month}", callback_data=f"end_date_{day}-{month}")
-         for day in range(start, min(start + 7, days_in_month + 1))]
-        for start in range(1, days_in_month + 1, 7)
-    ]
+    buttons = []
+    row = []
+    for day in range(1, days_in_month + 1):
+        row.append(InlineKeyboardButton(f"{day}-{month}", callback_data=f"end_date_{day}-{month}"))
+        if len(row) == 5:  # Keep the button alignment consistent
+            buttons.append(row)
+            row = []
+
+    if row:
+        buttons.append(row)
 
     reply_markup = InlineKeyboardMarkup(buttons)
-    await query.message.reply_text("Select the END DATE for your leave:", reply_markup=reply_markup)
-
+    await query.message.reply_text(
+        "📆 **Select the END DATE for your leave:**",
+        reply_markup=reply_markup,
+        parse_mode="Markdown"
+    )
 
 # Handle END DATE Selection
 async def end_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
