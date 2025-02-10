@@ -46,124 +46,7 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     wb = Workbook()
     ws = wb.active
     ws.title = f"{month_name} {year} Timesheet"
-    # # # Apply Arial 12 font to all cells
-    # # print("✅ Font class:", Font)
-    # # arial_font = Font(name="Arial", size=12)
-    # # arial_font = Font(name="Arial", size=12)
-    # #
-    # # for row in ws.iter_rows():
-    # #     for cell in row:
-    # #         cell.font = arial_font  # Apply Arial 12 font
-    #
-    # for row in ws.iter_rows():
-    #     for cell in row:
-    #         cell.font = arial_font
 
-    # # Header Section (PO Details)
-    # ws["A1"], ws["B1"] = "Description", description
-    # ws["A2"], ws["B2"] = "PO Ref", po_ref
-    # ws["A3"], ws["B3"] = "PO Date", po_date
-    # ws["D1"], ws["E1"] = "Month/Year", f"{month_name} - {year}"
-    # ws["D2"], ws["E2"] = "Contractor", contractor
-
-    # # Header Section (PO Details) - Start from Row 2
-    # ws["A2"], ws["B2"] = "Description", description
-    # ws["A3"], ws["B3"] = "PO Ref", po_ref
-    # ws["A4"], ws["B4"] = "PO Date", po_date
-    # ws["D2"], ws["E2"] = "Month/Year", f"{month_name} - {year}"
-    # ws["D3"], ws["E3"] = "Contractor", contractor
-    #
-    # # Apply Borders for Header Sections
-    # for row in range(2, 5):
-    #     for col in ["A", "B"]:
-    #         ws[f"{col}{row}"].border = thin_border  # Description to PO Date
-    # for row in range(2, 4):
-    #     for col in ["D", "E"]:
-    #         ws[f"{col}{row}"].border = thin_border  # Month/Year to Contractor
-    #
-    # # Apply Yellow Fill and Center Alignment to Static Cells in Column B (Second Column)
-    # for row in [2, 3, 4]:  # Rows to be highlighted in Column B
-    #     cell = ws[f"B{row}"]
-    #     cell.fill = yellow_fill
-    #     cell.alignment = center_alignment  # Corrected alignment syntax
-    #
-    # # Apply Yellow Fill and Center Alignment to Static Cells in Column E1 (Fifth Column)
-    # for row in [2]:  # Rows to be highlighted in Column E
-    #     cell = ws[f"E{row}"]
-    #     cell.fill = yellow_fill
-    #     cell.alignment = center_alignment  # Corrected alignment syntax
-    #
-    # # Apply Yellow Fill and Center Alignment to Static Cells in Column E2
-    # for row in [2]:  # Rows to be highlighted in Column E
-    #     cell = ws[f"E{row}"]
-    #     cell.alignment = center_alignment  # Corrected alignment syntax
-    #
-    # # Apply Yellow Fill and Center Alignment to Static Cells in Column E6
-    # for row in [6]:  # Rows to be highlighted in Column E
-    #     cell = ws[f"E{row}"]
-    #     cell.alignment = center_alignment  # Corrected alignment syntax
-    #
-    # # Ensure Row 1 is left unformatted (No Border, No Yellow Fill)
-    # for col in ["A", "B", "C", "D", "E"]:
-    #     ws[f"{col}1"].border = None
-    #     ws[f"{col}1"].fill = None
-
-    # # Header Section (PO Details) - Start from Row 2
-    # ws["A2"], ws["B2"] = "Description", description
-    # ws["A3"], ws["B3"] = "PO Ref", po_ref
-    # ws["A4"], ws["B4"] = "PO Date", po_date
-    # ws["D2"], ws["E2"] = "Month/Year", f"{month_name} - {year}"
-    # ws["D3"], ws["E3"] = "Contractor", contractor
-    #
-    # # Apply Borders for Header Sections (Only from Row 2 onwards)
-    # for row in range(2, 5):  # Row 1 is skipped
-    #     for col in ["A", "B"]:
-    #         ws[f"{col}{row}"].border = thin_border  # Description to PO Date
-    # for row in range(2, 4):  # Row 1 is skipped
-    #     for col in ["D", "E"]:
-    #         ws[f"{col}{row}"].border = thin_border  # Month/Year to Contractor
-    #
-    # # Apply Yellow Fill and Center Alignment to Static Cells in Column B (Description, PO Ref, PO Date)
-    # for row in [2, 3, 4]:
-    #     cell = ws[f"B{row}"]
-    #     cell.fill = yellow_fill
-    #     cell.alignment = center_alignment
-    #
-    # # Apply Yellow Fill and Center Alignment to Column E (Month/Year)
-    # ws["E2"].fill = yellow_fill
-    # ws["E2"].alignment = center_alignment  # Removed redundant lines
-    #
-    # # Apply Center Alignment Only to E3 (Contractor)
-    # ws["E3"].alignment = center_alignment
-    #
-    # # Ensure Row 1 is left unformatted (No Border, No Yellow Fill)
-    # for col in ["A", "B", "C", "D", "E"]:
-    #     ws[f"{col}1"].border = Border()  # Reset border
-    #     ws[f"{col}1"].fill = PatternFill(fill_type=None)  # Ensure fill is removed
-    #
-    # # User Details
-    # ws["A6"], ws["B6"] = "Name", name
-    # ws["D6"], ws["E6"] = "Skill Level", skill_level
-    # ws["A7"], ws["B7"] = "Role Specialization", role_specialization
-    # ws["A8"], ws["B8"] = "Group/Specialization", group_specialization
-    #
-    # # Apply Yellow Fill to Static Cells in Columns B & E
-    # static_fields = ["B6", "B7", "B8", "E6"]  # Include all necessary fields
-    # for cell in static_fields:
-    #     ws[cell].fill = yellow_fill
-    #
-    #     # Apply Borders for User Details
-    #     for row in range(6, 9):
-    #         for col in ["A", "B"]:
-    #             ws[f"{col}{row}"].border = thin_border  # Name to Group
-    #     ws["D6"].border = thin_border  # Skill Level Label
-    #     ws["E6"].border = thin_border  # Skill Level Value
-
-    #LATEST MERGE CELL CHANGES
-    # Merge and Format Header Section (PO Details)
-    # Merge and Format Header Section (PO Details)
-    # Merge Description field (B2:D2)
-    # Merge Description field (B2:D2)
     ws.merge_cells("B2:D2")
 
     # Set row height for Description row to ensure proper spacing
@@ -235,11 +118,6 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
             ws[f"{col}{row}"].alignment = Alignment(horizontal="center", vertical="bottom")
 
     # **Wrap Text for Description (B2:D2)**
-    # for col in ["B", "C", "D"]:
-    #     ws[f"{col}2"].alignment = Alignment(horizontal="center", vertical="bottom", wrap_text=True)
-    #     ws[f"{col}2"].font = Font(bold=False)  # Ensure text is not bold
-    #     #ws[f"{col}2"].font = bold_font  # Use the pre-defined bold font style
-
     # Set fixed column width for Description (B2:D2) and enable wrap text
     description_columns = ["B", "C", "D"]
     for col in description_columns:
@@ -284,20 +162,11 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     for row in range(6, 9):
         ws[f"B{row}"].alignment = Alignment(horizontal="left", vertical="bottom")  # Left align
 
-    print("✅ Final formatting and bottom alignment applied successfully!")
-
     # Table Headers
     headers = ["SN", "Date", "At Work", "Public Holiday", "Sick Leave", "Childcare Leave", "Annual Leave", "Remarks"]
     header_fills = [white_fill, white_fill, light_green_fill, light_yellow_fill, lighter_green_fill, white_fill,
                     light_blue_fill, white_fill]  # Corresponding fill colors
 
-    # for col_num, (header, fill) in enumerate(zip(headers, header_fills), 1):
-    #     cell = ws.cell(row=10, column=col_num, value=header)
-    #     cell.font = Font(bold=True, color="000000")  # Bold font with black text
-    #     cell.alignment = Alignment(horizontal="center", vertical="center")  # Center alignment
-    #     cell.border = Border(bottom=Side(style="medium"))  # Apply bottom border
-    #     cell.border = thin_border  # Apply thin border
-    #     cell.fill = fill  # Apply the respective color
     for col_num, (header, fill) in enumerate(zip(headers, header_fills), 1):
         cell = ws.cell(row=10, column=col_num, value=header)
 
@@ -378,18 +247,6 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
         public_holiday_display = "-" if public_holiday == 0.0 else f"{public_holiday:.1f}"
         remark_display = remark if remark else "-"
 
-        # **Insert Data** remove buffy numeric format
-        # row_data = [
-        #     current_row - 10,
-        #     formatted_date,
-        #     "" if at_work == 0.0 else f"{at_work:.1f}",
-        #     public_holiday_display,  # Keep public holiday column unchanged
-        #     "" if sick_leave == 0.0 else f"{sick_leave:.1f}",
-        #     "" if childcare_leave == 0.0 else f"{childcare_leave:.1f}",
-        #     "" if annual_leave == 0.0 else f"{annual_leave:.1f}",
-        #     remark_display
-        # ]
-
         # Convert numeric values explicitly to float to avoid Excel warnings
         row_data = [
             current_row - 10,
@@ -421,12 +278,6 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
                             7]:  # C=At Work, D=Public Holiday, E=Sick Leave, F=Childcare Leave, G=Annual Leave
                 ws.cell(row=current_row, column=col_num).number_format = "0.0"  # Set as number with 1 decimal place
 
-        # Apply Yellow Fill for At Work, Sick Leave, Childcare Leave, and Annual Leave up to row 31
-        # for row in range(11, 11 + days_in_month):  # Assuming row 11 is the first data row, row 41 is the last (31st day)
-        #     for col_num in [3, 5, 6,
-        #                         7]:  # Columns: At Work (C), Sick Leave (E), Childcare Leave (F), Annual Leave (G)
-        #             cell = ws.cell(row=row, column=col_num)
-        #             cell.fill = yellow_fill
         # Remove yellow for PH column and add yellow_fill to Date column
         # Apply Yellow Fill to "Date" Column (B) but NOT to Public Holiday (D)
         for row in range(11, 11 + days_in_month):  # Assuming row 11 is the first data row
@@ -449,53 +300,6 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
                     cell = ws.cell(row=row, column=col_num)
                     cell.alignment = right_alignment
 
-        # Code to Apply Red Font & Right Alignment to Remarks (Rows 1-42)
-        # for row in range(11, 53):  # Adjusting for row range from 11 to 42 (inclusive)
-        #     cell = ws.cell(row=row, column=8)  # Column 8 is "Remarks"
-        #     if cell.value not in ["-", ""]:  # Apply styles only to meaningful values
-        #         cell.font = red_font
-        #         cell.alignment = right_alignment  # Apply right alignment
-        #     else:  # If the value is "-", keep it black
-        #         cell.font = black_font
-        #         cell.alignment = right_alignment
-
-        # Apply Font Color & Right Alignment to Remarks (Rows 11-53)
-        # for row in range(11, 11 + days_in_month):
-        #     cell = ws.cell(row=row, column=8)  # Column 8 is "Remarks"
-        #     if cell.value and cell.value not in ["-", ""]:  # Apply styles only to meaningful values
-        #         # Ensure public holidays remain in red font
-        #         if any(holiday.lower() in cell.value.lower() for holiday in PUBLIC_HOLIDAYS.values()):
-        #             cell.font = red_font  # Keep red font for public holidays
-        #         else:
-        #             cell.font = black_font  # Other remarks remain black
-        #         cell.alignment = right_alignment  # Apply right alignment
-        #     else:  # If the value is "-", keep it black
-        #         cell.font = black_font
-        #         cell.alignment = right_alignment
-
-        # Apply Font Color & Right Alignment to Remarks (Rows 11-53)
-        # Apply Font Color & Right Alignment to Remarks (Rows 11-53)
-        # for row in range(11, 11 + days_in_month):
-        #     cell = ws.cell(row=row, column=8)  # Column 8 is "Remarks"
-        #
-        #     if cell.value and cell.value not in ["-", ""]:  # Apply styles only to meaningful values
-        #         # Normalize cell value for comparison
-        #         cell_value = cell.value.strip().lower()
-        #
-        #         # Check if the remark exactly matches any public holiday
-        #         for holiday in PUBLIC_HOLIDAYS.values():
-        #             if holiday.strip().lower() == cell_value:
-        #                 cell.font = Font(name="Arial", size=12, color="FF0000", bold=True)  # Explicitly set RED font
-        #                 break
-        #         else:
-        #             cell.font = Font(name="Arial", size=12, color="000000", bold=False)  # Keep black for other remarks
-        #
-        #         cell.alignment = right_alignment  # Apply right alignment
-        #     else:  # If the value is "-", keep it black
-        #         cell.font = Font(name="Arial", size=12, color="000000", bold=False)
-        #         cell.alignment = right_alignment
-        #
-        #         # Code to Apply Red Font & Right Alignment to Remarks (Rows 1-42)
         for row in range(11, 53):  # Adjusting for row range from 11 to 42 (inclusive)
             cell = ws.cell(row=row, column=8)  # Column 8 is "Remarks"
             if cell.value not in ["-", ""]:  # Apply styles only to meaningful values
@@ -529,96 +333,6 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     ws[f"A{current_row}"].border = thin_border
     ws[f"B{current_row}"].border = thin_border
     ws[f"H{current_row}"].border = thin_border
-
-    #     ws[f"A{current_row}"] = "Total"
-#     ws[f"A{current_row}"].font = bold_font
-#     ws[f"A{current_row}"].alignment = center_alignment
-#
-# #Total cells vlaues changed
-#     # for col_num, key in enumerate(totals.keys(), 3):
-#     #     total_value = totals[key]
-#     #     display_total = "-" if total_value == 0.0 else f"{total_value:.1f}"  # Show "-" if total is zero
-#     #     cell = ws.cell(row=current_row, column=col_num, value=display_total)
-#     #     cell.font = bold_font
-#     #     cell.alignment = right_alignment  # Apply right alignment
-#     #     cell.border = thin_border
-#     # Apply Borders to Total Row (Columns A to H - up to "Remarks")
-#     for col_num, key in enumerate(totals.keys(), 3):  # Starts from column C (At Work) to H (Remarks)
-#         total_value = totals[key]
-#         display_total = "-" if total_value == 0.0 else f"{total_value:.1f}"  # Show "-" if total is zero
-#
-#         cell = ws.cell(row=current_row, column=col_num, value=display_total)
-#         cell.font = bold_font
-#         cell.alignment = right_alignment  # Apply right alignment
-#         cell.border = thin_border  # Apply border to each cell
-#
-#     # Apply border to column A, B, H (since we skipped it in the loop)
-#     ws[f"A{current_row}"].border = thin_border
-#     ws[f"B{current_row}"].border = thin_border
-#     ws[f"H{current_row}"].border = thin_border
-
-    #current_row += 1 # Add an extra space
-    # # **Signature Section**
-    # current_date = datetime.now().strftime("%d - %B - %Y")
-    # ws[f"A{current_row + 2}"] = "Officer"
-    # ws[f"B{current_row + 2}"] = name
-    # ws[f"A{current_row + 3}"] = "Signature"
-    # ws[f"B{current_row + 3}"] = name
-    # ws[f"A{current_row + 4}"] = "Date"
-    # ws[f"B{current_row + 4}"] = current_date
-    #
-    # ws[f"A{current_row + 6}"] = "Reporting Officer"
-    # ws[f"B{current_row + 6}"] = reporting_officer
-    # ws[f"A{current_row + 7}"] = "Signature"
-    # ws[f"B{current_row + 7}"] = ""  # Leave Empty for Manager
-    # ws[f"A{current_row + 8}"] = "Date"
-    # ws[f"B{current_row + 8}"] = ""  # Leave Empty for Manager
-    #
-    # # Apply Borders to All Fields (Columns A & B)
-    # for row in range(current_row + 2, current_row + 9):  # Covers Officer + Reporting Officer sections
-    #     ws[f"A{row}"].border = thin_border
-    #     ws[f"B{row}"].border = thin_border
-    # for row in [current_row + 2, current_row + 3, current_row + 4, current_row + 6]:
-    #     ws[f"B{row}"].alignment = center_alignment
-
-    # NEW SIGNATURE SECTION:
-    # **Signature Section**
-    # current_date = datetime.now().strftime("%d - %B - %Y")
-    #
-    # # Merge Officer Fields Across B, C, D
-    # ws.merge_cells(f"B{current_row + 2}:D{current_row + 2}")  # Officer Name
-    # ws.merge_cells(f"B{current_row + 3}:D{current_row + 3}")  # Officer Signature
-    # ws.merge_cells(f"B{current_row + 4}:D{current_row + 4}")  # Officer Date
-    #
-    # # Merge Reporting Officer Fields Across B, C, D
-    # ws.merge_cells(f"B{current_row + 6}:D{current_row + 6}")  # Reporting Officer Name
-    # ws.merge_cells(f"B{current_row + 7}:D{current_row + 7}")  # Empty Signature Field
-    # ws.merge_cells(f"B{current_row + 8}:D{current_row + 8}")  # Empty Date Field
-    #
-    # # Assign Values
-    # ws[f"A{current_row + 2}"], ws[f"B{current_row + 2}"] = "Officer", name
-    # ws[f"A{current_row + 3}"], ws[f"B{current_row + 3}"] = "Signature", name
-    # ws[f"A{current_row + 4}"], ws[f"B{current_row + 4}"] = "Date", current_date
-    #
-    # ws[f"A{current_row + 6}"], ws[f"B{current_row + 6}"] = "Reporting Officer", reporting_officer
-    # ws[f"A{current_row + 7}"], ws[f"B{current_row + 7}"] = "Signature", ""  # Leave Empty for Manager
-    # ws[f"A{current_row + 8}"], ws[f"B{current_row + 8}"] = "Date", ""  # Leave Empty for Manager
-    #
-    # # Apply Borders to A-D
-    # for row in range(current_row + 2, current_row + 9):  # Covers Officer + Reporting Officer sections
-    #     for col in ["A", "B", "C", "D"]:
-    #         ws[f"{col}{row}"].border = thin_border
-    #
-    # # **Apply Bottom Alignment**
-    # for row in range(current_row + 2, current_row + 9):
-    #     for col in ["A", "B", "C", "D"]:
-    #         ws[f"{col}{row}"].alignment = Alignment(horizontal="center", vertical="bottom")
-    #
-    #         # Keep A Column Left-Aligned
-    # for row in range(current_row + 2, current_row + 9):
-    #     ws[f"A{row}"].alignment = Alignment(horizontal="left", vertical="bottom")
-    #
-    # print("✅ Signature section formatted successfully!")
 
     # **Signature Section**
     current_date = datetime.now().strftime("%d - %b - %Y")  # Ensure proper formatting before writing to Excel
@@ -668,20 +382,7 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
             if cell.column != 8:  # Skip column 8 to retain red font for public holidays
                 cell.font = arial_font  # Apply Arial 12 font
 
-    # ✅ Now, Ensure Remarks Column (Column 8) Uses Arial 12 But Keeps Public Holidays Red
-    # for row in range(11, 11 + days_in_month):
-    #     cell = ws.cell(row=row, column=8)  # Remarks column
-    #
-    #     if cell.value and cell.value not in ["-", ""]:  # Apply styles only to meaningful values
-    #         cell_value = cell.value.strip().lower()
-    #
-    #         # Check if the remark is a public holiday
-    #         if any(holiday.lower() in cell_value for holiday in PUBLIC_HOLIDAYS.values()):
-    #             cell.font = Font(name="Arial", size=12, color="FF0000", bold=False)  # Keep red font for public holidays
-    #         #else:
-    #          #   cell.font = Font(name="Arial", size=12, color="000000", bold=False)  # Apply Arial 12 for other remarks
-    #     else:  # If the value is "-", keep it black and in Arial
-    #         cell.font = Font(name="Arial", size=12, color="000000", bold=False)
+    # Now, Ensure Remarks Column (Column 8) Uses Arial 12 But Keeps Public Holidays Red
     for row in range(11, 11 + days_in_month):
         cell = ws.cell(row=row, column=8)  # Remarks column
         date_cell = ws.cell(row=row, column=2)  # Date column to determine the weekday
@@ -705,22 +406,6 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
         else:  # If the value is "-", keep it black and in Arial
             cell.font = Font(name="Arial", size=12, color="000000", bold=False)
 
-    # Auto-adjust column width based on max content length
-    # for col in ws.columns:
-    #     max_length = 0
-    #     col_letter = col[0].column_letter  # Get column letter (A, B, C, etc.)
-    #     for cell in col:
-    #         try:
-    #             if cell.value:
-    #                 max_length = max(max_length, len(str(cell.value)))
-    #         except:
-    #             pass
-    #     adjusted_width = max_length + 2  # Add some extra space
-    #     ws.column_dimensions[col_letter].width = adjusted_width
-    # Ensure B-D don’t get auto-expanded beyond set width
-    # for col in ["B", "C", "D"]:
-    #     ws.column_dimensions[col].width = 25 if col == "B" else 5  # Only B should have a reasonable width
-    # Ensure B remains fixed but expand C and D dynamically based on content
     ws.column_dimensions["B"].width = 25  # Keep Description column at a reasonable width
 
     # Auto-expand C and D (At Work, Public Holiday)
