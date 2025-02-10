@@ -47,42 +47,87 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     ws = wb.active
     ws.title = f"{month_name} {year} Timesheet"
 
-    # Header Section (PO Details)
-    ws["A1"], ws["B1"] = "Description", description
-    ws["A2"], ws["B2"] = "PO Ref", po_ref
-    ws["A3"], ws["B3"] = "PO Date", po_date
-    ws["D1"], ws["E1"] = "Month/Year", f"{month_name} - {year}"
-    ws["D2"], ws["E2"] = "Contractor", contractor
+    # # Header Section (PO Details)
+    # ws["A1"], ws["B1"] = "Description", description
+    # ws["A2"], ws["B2"] = "PO Ref", po_ref
+    # ws["A3"], ws["B3"] = "PO Date", po_date
+    # ws["D1"], ws["E1"] = "Month/Year", f"{month_name} - {year}"
+    # ws["D2"], ws["E2"] = "Contractor", contractor
 
-    # Apply Borders for Header Sections
-    for row in range(1, 4):
+    # # Header Section (PO Details) - Start from Row 2
+    # ws["A2"], ws["B2"] = "Description", description
+    # ws["A3"], ws["B3"] = "PO Ref", po_ref
+    # ws["A4"], ws["B4"] = "PO Date", po_date
+    # ws["D2"], ws["E2"] = "Month/Year", f"{month_name} - {year}"
+    # ws["D3"], ws["E3"] = "Contractor", contractor
+    #
+    # # Apply Borders for Header Sections
+    # for row in range(2, 5):
+    #     for col in ["A", "B"]:
+    #         ws[f"{col}{row}"].border = thin_border  # Description to PO Date
+    # for row in range(2, 4):
+    #     for col in ["D", "E"]:
+    #         ws[f"{col}{row}"].border = thin_border  # Month/Year to Contractor
+    #
+    # # Apply Yellow Fill and Center Alignment to Static Cells in Column B (Second Column)
+    # for row in [2, 3, 4]:  # Rows to be highlighted in Column B
+    #     cell = ws[f"B{row}"]
+    #     cell.fill = yellow_fill
+    #     cell.alignment = center_alignment  # Corrected alignment syntax
+    #
+    # # Apply Yellow Fill and Center Alignment to Static Cells in Column E1 (Fifth Column)
+    # for row in [2]:  # Rows to be highlighted in Column E
+    #     cell = ws[f"E{row}"]
+    #     cell.fill = yellow_fill
+    #     cell.alignment = center_alignment  # Corrected alignment syntax
+    #
+    # # Apply Yellow Fill and Center Alignment to Static Cells in Column E2
+    # for row in [2]:  # Rows to be highlighted in Column E
+    #     cell = ws[f"E{row}"]
+    #     cell.alignment = center_alignment  # Corrected alignment syntax
+    #
+    # # Apply Yellow Fill and Center Alignment to Static Cells in Column E6
+    # for row in [6]:  # Rows to be highlighted in Column E
+    #     cell = ws[f"E{row}"]
+    #     cell.alignment = center_alignment  # Corrected alignment syntax
+    #
+    # # Ensure Row 1 is left unformatted (No Border, No Yellow Fill)
+    # for col in ["A", "B", "C", "D", "E"]:
+    #     ws[f"{col}1"].border = None
+    #     ws[f"{col}1"].fill = None
+
+    # Header Section (PO Details) - Start from Row 2
+    ws["A2"], ws["B2"] = "Description", description
+    ws["A3"], ws["B3"] = "PO Ref", po_ref
+    ws["A4"], ws["B4"] = "PO Date", po_date
+    ws["D2"], ws["E2"] = "Month/Year", f"{month_name} - {year}"
+    ws["D3"], ws["E3"] = "Contractor", contractor
+
+    # Apply Borders for Header Sections (Only from Row 2 onwards)
+    for row in range(2, 5):  # Row 1 is skipped
         for col in ["A", "B"]:
             ws[f"{col}{row}"].border = thin_border  # Description to PO Date
-    for row in range(1, 3):
+    for row in range(2, 4):  # Row 1 is skipped
         for col in ["D", "E"]:
             ws[f"{col}{row}"].border = thin_border  # Month/Year to Contractor
 
-    # Apply Yellow Fill and Center Alignment to Static Cells in Column B (Second Column)
-    for row in [1, 2, 3]:  # Rows to be highlighted in Column B
+    # Apply Yellow Fill and Center Alignment to Static Cells in Column B (Description, PO Ref, PO Date)
+    for row in [2, 3, 4]:
         cell = ws[f"B{row}"]
         cell.fill = yellow_fill
-        cell.alignment = center_alignment  # Corrected alignment syntax
+        cell.alignment = center_alignment
 
-    # Apply Yellow Fill and Center Alignment to Static Cells in Column E1 (Fifth Column)
-    for row in [1]:  # Rows to be highlighted in Column E
-        cell = ws[f"E{row}"]
-        cell.fill = yellow_fill
-        cell.alignment = center_alignment  # Corrected alignment syntax
+    # Apply Yellow Fill and Center Alignment to Column E (Month/Year)
+    ws["E2"].fill = yellow_fill
+    ws["E2"].alignment = center_alignment  # Removed redundant lines
 
-    # Apply Yellow Fill and Center Alignment to Static Cells in Column E2
-    for row in [2]:  # Rows to be highlighted in Column E
-        cell = ws[f"E{row}"]
-        cell.alignment = center_alignment  # Corrected alignment syntax
+    # Apply Center Alignment Only to E3 (Contractor)
+    ws["E3"].alignment = center_alignment
 
-    # Apply Yellow Fill and Center Alignment to Static Cells in Column E6
-    for row in [6]:  # Rows to be highlighted in Column E
-        cell = ws[f"E{row}"]
-        cell.alignment = center_alignment  # Corrected alignment syntax
+    # Ensure Row 1 is left unformatted (No Border, No Yellow Fill)
+    for col in ["A", "B", "C", "D", "E"]:
+        ws[f"{col}1"].border = Border()  # Reset border
+        ws[f"{col}1"].fill = PatternFill(fill_type=None)  # Ensure fill is removed
 
     # User Details
     ws["A6"], ws["B6"] = "Name", name
@@ -242,12 +287,27 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     ws[f"A{current_row}"].alignment = center_alignment
 
 #Total cells vlaues changed
-    for col_num, key in enumerate(totals.keys(), 3):
+    # for col_num, key in enumerate(totals.keys(), 3):
+    #     total_value = totals[key]
+    #     display_total = "-" if total_value == 0.0 else f"{total_value:.1f}"  # Show "-" if total is zero
+    #     cell = ws.cell(row=current_row, column=col_num, value=display_total)
+    #     cell.font = bold_font
+    #     cell.alignment = right_alignment  # Apply right alignment
+    #     cell.border = thin_border
+    # Apply Borders to Total Row (Columns A to H - up to "Remarks")
+    for col_num, key in enumerate(totals.keys(), 3):  # Starts from column C (At Work) to H (Remarks)
         total_value = totals[key]
         display_total = "-" if total_value == 0.0 else f"{total_value:.1f}"  # Show "-" if total is zero
+
         cell = ws.cell(row=current_row, column=col_num, value=display_total)
         cell.font = bold_font
         cell.alignment = right_alignment  # Apply right alignment
+        cell.border = thin_border  # Apply border to each cell
+
+    # Apply border to column A, B, H (since we skipped it in the loop)
+    ws[f"A{current_row}"].border = thin_border
+    ws[f"B{current_row}"].border = thin_border
+    ws[f"H{current_row}"].border = thin_border
 
     #current_row += 1 # Add an extra space
     # **Signature Section**
@@ -266,6 +326,10 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     ws[f"A{current_row + 8}"] = "Date"
     ws[f"B{current_row + 8}"] = ""  # Leave Empty for Manager
 
+    # Apply Borders to All Fields (Columns A & B)
+    for row in range(current_row + 2, current_row + 9):  # Covers Officer + Reporting Officer sections
+        ws[f"A{row}"].border = thin_border
+        ws[f"B{row}"].border = thin_border
     for row in [current_row + 2, current_row + 3, current_row + 4, current_row + 6]:
         ws[f"B{row}"].alignment = center_alignment
 
