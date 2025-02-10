@@ -362,11 +362,25 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
             #   cell.font = bold_font
 
         # Apply Yellow Fill for At Work, Sick Leave, Childcare Leave, and Annual Leave up to row 31
-        for row in range(11, 11 + days_in_month):  # Assuming row 11 is the first data row, row 41 is the last (31st day)
-            for col_num in [3, 5, 6,
-                                7]:  # Columns: At Work (C), Sick Leave (E), Childcare Leave (F), Annual Leave (G)
-                    cell = ws.cell(row=row, column=col_num)
-                    cell.fill = yellow_fill
+        # for row in range(11, 11 + days_in_month):  # Assuming row 11 is the first data row, row 41 is the last (31st day)
+        #     for col_num in [3, 5, 6,
+        #                         7]:  # Columns: At Work (C), Sick Leave (E), Childcare Leave (F), Annual Leave (G)
+        #             cell = ws.cell(row=row, column=col_num)
+        #             cell.fill = yellow_fill
+        # Remove yellow for PH column and add yellow_fill to Date column
+        # Apply Yellow Fill to "Date" Column (B) but NOT to Public Holiday (D)
+        for row in range(11, 11 + days_in_month):  # Assuming row 11 is the first data row
+            ws[f"B{row}"].fill = yellow_fill  # Apply Yellow Fill to Date Column
+
+        # Apply Yellow Fill for "At Work", "Sick Leave", "Childcare Leave", and "Annual Leave" Columns (C, E, F, G)
+        for row in range(11, 11 + days_in_month):
+            for col_num in [3, 5, 6, 7]:  # C=At Work, E=Sick Leave, F=Childcare Leave, G=Annual Leave
+                cell = ws.cell(row=row, column=col_num)
+                cell.fill = yellow_fill
+
+        # Ensure "Public Holiday" (D) is NOT Yellow
+        for row in range(11, 11 + days_in_month):
+            ws[f"D{row}"].fill = PatternFill(fill_type=None)  # Remove yellow fill from Public Holiday
 
         # Apply right aligned for At Work, Public Holiday, Sick Leave, Childcare Leave, and Annual Leave up to row 31
         for row in range(11, 11 + days_in_month):  # Assuming row 11 is the first data row, row 41 is the last (31st day)
