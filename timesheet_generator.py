@@ -176,7 +176,7 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
         cell.border = thin_border  # Apply thin border
         cell.fill = fill  # Apply the respective color
 
-    # ✅ Ensure "Remarks" header (Column 8) is formatted the same way
+    # Ensure "Remarks" header (Column 8) is formatted the same way
     ws["H10"].font = Font(name="Arial", size=12, bold=False, color="000000")  # Match font
 
     # **Expand Leave Data**

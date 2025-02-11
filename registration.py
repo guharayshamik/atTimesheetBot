@@ -132,7 +132,6 @@ async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYP
         )
 
 
-
 async def handle_registration_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
