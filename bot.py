@@ -191,6 +191,35 @@ async def show_start_date_selection(update: Update, context: ContextTypes.DEFAUL
 
 
     # Handle START DATE Selection
+# async def start_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+#     query = update.callback_query
+#     await query.answer()
+#
+#     try:
+#         # Ensure callback data has the correct format: start_date_6-June
+#         callback_data = query.data
+#         if not callback_data.startswith("start_date_"):
+#             logger.error(f"Invalid START DATE callback data: {callback_data}")
+#             await query.message.reply_text("⚠️ Invalid date format received.\n\nPlease restart using /start.")
+#             return
+#
+#         # Extract and validate the date
+#         selected_start_date = callback_data.replace("start_date_", "")
+#         datetime.strptime(selected_start_date, "%d-%B")  # Validate format
+#
+#         # Store the valid date in context
+#         context.user_data["start_date"] = selected_start_date
+#         logger.info(f"User selected START DATE: {selected_start_date}")
+#         print("selected_start_date chosen by user", selected_start_date)
+#
+#         # Move to END DATE selection
+#         await show_end_date_selection(update, context)
+#
+#     except ValueError:
+#         logger.error(f"Invalid date format received: {callback_data}")
+#         await query.message.reply_text("⚠️ Selected date format is incorrect. Please try again.")
+
+# Handle START DATE Selection
 async def start_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -205,12 +234,41 @@ async def start_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
         # Extract and validate the date
         selected_start_date = callback_data.replace("start_date_", "")
-        datetime.strptime(selected_start_date, "%d-%B")  # Validate format
+        start_date_obj = datetime.strptime(selected_start_date, "%d-%B")  # Validate format
 
-        # Store the valid date in context
+        user_id = str(update.effective_user.id)
+        month = context.user_data.get("month")
+
+        if not month:
+            await query.message.reply_text("⚠️ Please select a month before choosing leave dates.")
+            return
+
+        # Ensure leave tracking exists
+        if user_id not in user_leaves:
+            user_leaves[user_id] = {}
+        if month not in user_leaves[user_id]:
+            user_leaves[user_id][month] = []
+
+        # **Check if the selected START DATE overlaps with an existing leave**
+        for existing_start, existing_end, existing_leave_type in user_leaves[user_id][month]:
+            existing_start_date = datetime.strptime(existing_start, "%d-%B")
+            existing_end_date = datetime.strptime(existing_end, "%d-%B")
+
+            # Check if the selected start date falls within an existing leave period
+            if existing_start_date <= start_date_obj <= existing_end_date:
+                logger.warning(f"User {user_id} attempted overlapping start date: {selected_start_date}")
+                await query.message.reply_text(
+                    f"⚠️ The selected START DATE *overlaps* with an existing leave:\n"
+                    f"📅 {existing_start} - {existing_end} ({existing_leave_type})\n\n"
+                    "🔄 *Please select a different START DATE.*",
+                    parse_mode="Markdown"
+                )
+                await show_start_date_selection(update, context)  # Prompt for a new start date
+                return  # Stop execution
+
+        # **If no overlap, proceed with storing the start date**
         context.user_data["start_date"] = selected_start_date
-        logger.info(f"User selected START DATE: {selected_start_date}")
-        print("selected_start_date chosen by user", selected_start_date)
+        logger.info(f"User {user_id} selected START DATE: {selected_start_date}")
 
         # Move to END DATE selection
         await show_end_date_selection(update, context)
@@ -218,6 +276,7 @@ async def start_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
     except ValueError:
         logger.error(f"Invalid date format received: {callback_data}")
         await query.message.reply_text("⚠️ Selected date format is incorrect. Please try again.")
+
 
 
 # Show END DATE Selection ( FIXED MISSING FUNCTION )
@@ -296,6 +355,26 @@ async def end_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             user_leaves[user_id] = {}
         if month not in user_leaves[user_id]:
             user_leaves[user_id][month] = []
+
+
+        # **Check for overlapping leave periods**
+        for existing_start, existing_end, existing_leave_type in user_leaves[user_id][month]:
+            existing_start_date = datetime.strptime(existing_start, "%d-%B")
+            existing_end_date = datetime.strptime(existing_end, "%d-%B")
+
+            # Check if the new leave overlaps with any existing leave
+            if not (end_date_obj < existing_start_date or start_date_obj > existing_end_date):
+                logger.warning(f"User {user_id} attempted overlapping leave: {start_date} - {selected_end_date}")
+                await query.message.reply_text(
+                    f"⚠️ The selected leave period *overlaps* with an existing leave:\n"
+                    f"📅 {existing_start} - {existing_end} ({existing_leave_type})\n\n"
+                    "🔄 *Please reselect the START and END dates.*",
+                    parse_mode="Markdown"
+                )
+                await show_start_date_selection(update, context)  # Prompt for new dates
+                return  # Stop execution
+
+        # **If no overlap, add leave entry**
 
         user_leaves[user_id][month].append(
             (start_date_obj.strftime("%d-%B"), end_date_obj.strftime("%d-%B"), leave_type))
