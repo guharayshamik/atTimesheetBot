@@ -5,19 +5,42 @@ from calendar import monthrange
 from dotenv import load_dotenv
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 from timesheet_generator import generate_timesheet_excel
 from utils.utils import PUBLIC_HOLIDAYS, load_user_details  # Load dynamically
 from registration import register_new_user, capture_user_details, \
     handle_registration_buttons  # Import the missing function
 from de_registration import confirm_deregistration, handle_deregistration_buttons
 import asyncio
+from collections import deque
+import time
+import configparser
+
 
 # Load environment variables
 load_dotenv()
 
 # Global queue dictionary to queue tasks per user
 user_task_queues = {}
+
+# Load config
+config = configparser.ConfigParser()
+config.read("config/config.ini")
+
+# Now this works because we have a [rate_limit] section
+MAX_ATTEMPTS = int(config["rate_limit"]["MAX_ATTEMPTS"])
+TIME_WINDOW = int(config["rate_limit"]["TIME_WINDOW"])
+
+print(f"MAX_ATTEMPTS: {MAX_ATTEMPTS}, TIME_WINDOW: {TIME_WINDOW}")
+
+# Rate limiter dictionary {user_id: deque of timestamps}
+rate_limits = {}
+
+# Ensure required values are present
+if "rate_limit" not in config or "MAX_ATTEMPTS" not in config["rate_limit"] or "TIME_WINDOW" not in config["rate_limit"]:
+    raise ValueError("Missing rate limit configuration in config.ini!")
+
+
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -79,6 +102,8 @@ async def month_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     selected_month = query.data.split("_")[1]
     context.user_data["month"] = selected_month
+    context.user_data["waiting_for_button"] = True  # Expect button input next
+
     logger.info(f"User {update.effective_user.id} selected month: {selected_month}")
 
     buttons = [
@@ -288,26 +313,6 @@ async def end_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # Handle Generate Timesheet
-# async def generate_timesheet(update: Update, context: ContextTypes.DEFAULT_TYPE):
-#     query = update.callback_query
-#     await query.answer()
-#
-#     user_id = str(update.effective_user.id).strip()
-#     month = context.user_data.get("month")
-#
-#     if not month:
-#         await query.message.reply_text("You must first select a month.")
-#         return
-#
-#     # Ensure a queue exists for the user
-#     user_task_queues.setdefault(user_id, asyncio.Queue())
-#
-#     # Add timesheet generation task to the queue
-#     await user_task_queues[user_id].put((query, context))
-#
-#     # Start processing the queue if it's the first task
-#     if user_task_queues[user_id].qsize() == 1:
-#         asyncio.create_task(process_queue(user_id))
 
 async def generate_timesheet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -319,6 +324,9 @@ async def generate_timesheet(update: Update, context: ContextTypes.DEFAULT_TYPE)
     if not month:
         await query.message.reply_text("You must first select a month.")
         return
+
+    # Reset button expectation since we are now processing the timesheet
+    context.user_data.pop("waiting_for_button", None)
 
     # Ensure user details exist
     USER_DETAILS = load_user_details()
@@ -337,6 +345,27 @@ async def generate_timesheet(update: Update, context: ContextTypes.DEFAULT_TYPE)
             parse_mode="Markdown"
         )
         return
+
+    # RATE LIMITING LOGIC
+    now = time.time()
+    rate_limits.setdefault(user_id, deque())
+
+    # Remove old timestamps outside the time window
+    while rate_limits[user_id] and now - rate_limits[user_id][0] > TIME_WINDOW:
+        rate_limits[user_id].popleft()
+
+    # Check if the user exceeded the limit
+    if len(rate_limits[user_id]) >= MAX_ATTEMPTS:
+        await query.message.reply_text(
+            "⚠️ *Attempt threshold reached!*\n\n"
+            "You have reached the maximum allowed attempts within a short period. "
+            "Please wait and try again after a few seconds.",
+            parse_mode="Markdown"
+        )
+        return
+
+    # Add current timestamp to track usage
+    rate_limits[user_id].append(now)
 
     # Ensure a queue exists for the user
     user_task_queues.setdefault(user_id, asyncio.Queue())
@@ -404,6 +433,40 @@ async def process_queue(user_id):
         if not user_task_queues[user_id].empty():
             user_task_queues[user_id].task_done()
 
+async def handle_unexpected_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Handles unexpected text inputs during button-based workflows.
+    Guides users to tap buttons instead of typing random text.
+    """
+    user_id = str(update.effective_user.id)
+
+    # Check if user is in a step that requires button selection (e.g., timesheet generation)
+    if "waiting_for_button" in context.user_data:
+        await update.message.reply_text(
+            "⚠️ *Please tap the button to proceed.*\n\n"
+            "This bot works through interactive buttons, kindly select from the options provided.",
+            parse_mode="Markdown"
+        )
+        return
+
+    # If the user is not in a button-based flow, ignore or provide help.
+    await update.message.reply_text(
+        "🤖 If you need assistance, use /start to begin."
+    )
+
+async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Determines if the text input should be processed for registration
+    or handled as an unexpected input in timesheet generation.
+    """
+    user_id = str(update.effective_user.id)
+    step = context.user_data.get("registration_step")  # Check if user is in registration mode
+
+    if step:  # If the user is in the registration process, process the input for registration
+        await capture_user_details(update, context)
+    else:  # If not in registration, handle unexpected input
+        await handle_unexpected_text(update, context)
+
 
 # main function in bot.py
 def main():
@@ -412,8 +475,11 @@ def main():
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("register", register_new_user))
 
-    # Add MessageHandler to capture user input during registration
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, capture_user_details))
+    # # Add MessageHandler to capture user input during registration
+    # application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, capture_user_details))
+    # application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_unexpected_text))
+    # Register a **single** message handler that decides the flow
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_input))
 
     # Fix: Add CallbackQueryHandler for handling quick-select buttons
     application.add_handler(
