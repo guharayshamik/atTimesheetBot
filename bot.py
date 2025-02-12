@@ -16,6 +16,13 @@ import time
 import configparser
 
 
+# Configure logging
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
+
+# Configure logging with DEBUG mode
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
 # Load environment variables
 load_dotenv()
 
@@ -40,16 +47,6 @@ rate_limits = {}
 if "rate_limit" not in config or "MAX_ATTEMPTS" not in config["rate_limit"] or "TIME_WINDOW" not in config["rate_limit"]:
     raise ValueError("Missing rate limit configuration in config.ini!")
 
-
-
-
-# Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-logger = logging.getLogger(__name__)
-
-# Configure logging with DEBUG mode
-logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-
 # Get bot token
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 if not BOT_TOKEN:
@@ -59,12 +56,15 @@ if not BOT_TOKEN:
 # In-memory storage for user inputs
 user_leaves = {}
 
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id).strip()
+    query = update.callback_query  # Capture callback query
 
     USER_DETAILS = load_user_details()
     user_details = USER_DETAILS.get(user_id)
+
+    # Check if this was triggered by a callback button
+    message = update.message if update.message else query.message
 
     if user_details:
         name = user_details["name"]
@@ -85,7 +85,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         logger.info(f"User {name} ({user_id}) started the bot.")
 
-        await update.message.reply_text(
+        # await update.message.reply_text(
+        #     f"👋 **Welcome back, {name}!**\n\n"
+        #     "📅 **Select a month for your timesheet:**",
+        #     reply_markup=reply_markup,
+        #     parse_mode="Markdown"
+        # )
+        await message.reply_text(
             f"👋 **Welcome back, {name}!**\n\n"
             "📅 **Select a month for your timesheet:**",
             reply_markup=reply_markup,
@@ -458,6 +464,61 @@ async def generate_timesheet(update: Update, context: ContextTypes.DEFAULT_TYPE)
         asyncio.create_task(process_queue(user_id))
 
 
+# async def process_queue(user_id):
+#     while not user_task_queues[user_id].empty():
+#         query, context = await user_task_queues[user_id].get()
+#
+#         try:
+#             month = context.user_data.get("month")
+#             if not month:
+#                 await query.message.reply_text("You must first select a month.")
+#                 continue
+#
+#             logger.info(f"📝 Generating timesheet for user {user_id} for month: {month}")
+#
+#             month_number = datetime.strptime(month, "%B").month
+#             year = datetime.now().year
+#
+#             # Ensure leave data exists
+#             user_leaves.setdefault(user_id, {}).setdefault(month, [])
+#
+#             leave_data = user_leaves[user_id][month]
+#             logger.info(f"Raw leave_data for user {user_id}: {leave_data}")
+#
+#             parsed_leave_data = []
+#             for leave_entry in leave_data:
+#                 if not isinstance(leave_entry, tuple) or len(leave_entry) != 3:
+#                     raise ValueError(f"Invalid leave entry format: {leave_entry}")
+#
+#                 start_date_str, end_date_str, leave_type = leave_entry
+#                 start_date_obj = datetime.strptime(start_date_str, "%d-%B").replace(year=year)
+#                 end_date_obj = datetime.strptime(end_date_str, "%d-%B").replace(year=year)
+#
+#                 parsed_leave_data.append((start_date_obj.strftime("%d-%B"), end_date_obj.strftime("%d-%B"), leave_type))
+#
+#             logger.info(f"Final parsed_leave_data for user {user_id}: {parsed_leave_data}")
+#
+#             await asyncio.sleep(AWAIT)  # Delay to prevent race conditions
+#
+#             output_file = generate_timesheet_excel(user_id, month_number, year, parsed_leave_data)
+#
+#             if not os.path.exists(output_file):
+#                 raise FileNotFoundError(f"Timesheet file not found: {output_file}")
+#
+#             with open(output_file, "rb") as doc:
+#                 await query.message.reply_document(document=doc, filename=os.path.basename(output_file))
+#
+#             # Clear leave data only after a successful generation
+#             user_leaves[user_id][month] = []
+#
+#         except Exception as e:
+#             logger.error(f"Error generating timesheet for user {user_id}: {e}")
+#             await query.message.reply_text(f"Error generating timesheet: {e}")
+#
+#         # Ensure queue size is checked before calling `.task_done()`
+#         if not user_task_queues[user_id].empty():
+#             user_task_queues[user_id].task_done()
+
 async def process_queue(user_id):
     while not user_task_queues[user_id].empty():
         query, context = await user_task_queues[user_id].get()
@@ -505,13 +566,38 @@ async def process_queue(user_id):
             # Clear leave data only after a successful generation
             user_leaves[user_id][month] = []
 
+            # **NEW: Add a Restart Button**
+            restart_button = [
+                [InlineKeyboardButton("🔄 Start Again", callback_data="restart_timesheet")]
+            ]
+            reply_markup = InlineKeyboardMarkup(restart_button)
+
+            await query.message.reply_text(
+                "✅ *Timesheet successfully generated!* \n\n"
+                "Would you like to generate another timesheet?",
+                reply_markup=reply_markup,
+                parse_mode="Markdown"
+            )
+
         except Exception as e:
             logger.error(f"Error generating timesheet for user {user_id}: {e}")
             await query.message.reply_text(f"Error generating timesheet: {e}")
 
-        # Ensure queue size is checked before calling `.task_done()`
         if not user_task_queues[user_id].empty():
             user_task_queues[user_id].task_done()
+
+async def restart_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    user_id = str(update.effective_user.id)
+    context.user_data.clear()  # Reset session data
+    user_leaves.pop(user_id, None)  # Remove old leave records
+
+    logger.info(f"User {user_id} restarted the timesheet process.")
+
+    # Call start function
+    await start(update, context)
 
 async def handle_unexpected_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
@@ -572,6 +658,9 @@ def main():
     application.add_handler(CallbackQueryHandler(end_date_handler, pattern="^end_date_"))
     application.add_handler(
         CallbackQueryHandler(generate_timesheet, pattern="^(generate_timesheet_now|generate_timesheet_after_leave)$"))
+
+    # Restart Button Handler
+    application.add_handler(CallbackQueryHandler(restart_handler, pattern="^restart_timesheet$"))
 
     # De-registration handlers
     application.add_handler(CommandHandler("reset", confirm_deregistration))
