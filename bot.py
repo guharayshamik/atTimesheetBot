@@ -29,8 +29,9 @@ config.read("config/config.ini")
 # Now this works because we have a [rate_limit] section
 MAX_ATTEMPTS = int(config["rate_limit"]["MAX_ATTEMPTS"])
 TIME_WINDOW = int(config["rate_limit"]["TIME_WINDOW"])
+AWAIT = float(config["race"]["AWAIT"])
 
-print(f"MAX_ATTEMPTS: {MAX_ATTEMPTS}, TIME_WINDOW: {TIME_WINDOW}")
+print(f"MAX_ATTEMPTS: {MAX_ATTEMPTS}, TIME_WINDOW: {TIME_WINDOW}, AWAIT: {AWAIT}")
 
 # Rate limiter dictionary {user_id: deque of timestamps}
 rate_limits = {}
@@ -199,7 +200,7 @@ async def start_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
         callback_data = query.data
         if not callback_data.startswith("start_date_"):
             logger.error(f"Invalid START DATE callback data: {callback_data}")
-            await query.message.reply_text("Error: Invalid date format received. Please restart.")
+            await query.message.reply_text("⚠️ Invalid date format received.\n\nPlease restart using /start.")
             return
 
         # Extract and validate the date
@@ -216,7 +217,7 @@ async def start_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     except ValueError:
         logger.error(f"Invalid date format received: {callback_data}")
-        await query.message.reply_text("Error: Selected date format is incorrect. Please try again.")
+        await query.message.reply_text("⚠️ Selected date format is incorrect. Please try again.")
 
 
 # Show END DATE Selection ( FIXED MISSING FUNCTION )
@@ -259,7 +260,7 @@ async def end_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         callback_data = query.data
         if not callback_data.startswith("end_date_"):
             logger.error(f"Invalid END DATE callback data: {callback_data}")
-            await query.message.reply_text("Error: Invalid date format received. Please restart.")
+            await query.message.reply_text("⚠️ Invalid date format received.\n\nPlease restart using /start.")
             return
 
         # Extract and validate the date
@@ -272,7 +273,7 @@ async def end_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         leave_type = context.user_data.get("leave_type")
 
         if not start_date or not leave_type:
-            await query.message.reply_text("Error: Missing leave details. Please restart.")
+            await query.message.reply_text("⚠️ Missing leave START DATE or Leave Type.\n\nPlease restart using /start.")
             return
 
         # Convert START DATE to datetime object
@@ -309,7 +310,7 @@ async def end_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     except ValueError as e:
         logger.error(f"Invalid date format received: {e}")
-        await query.message.reply_text("Error: Selected date format is incorrect. Please try again.")
+        await query.message.reply_text("⚠️ Selected date format is incorrect. Please try again.")
 
 
 # Handle Generate Timesheet
@@ -412,7 +413,7 @@ async def process_queue(user_id):
 
             logger.info(f"Final parsed_leave_data for user {user_id}: {parsed_leave_data}")
 
-            await asyncio.sleep(0.5)  # Delay to prevent race conditions
+            await asyncio.sleep(AWAIT)  # Delay to prevent race conditions
 
             output_file = generate_timesheet_excel(user_id, month_number, year, parsed_leave_data)
 
