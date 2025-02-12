@@ -1,0 +1,6 @@
+.git
+.gitignore
+.DS_Store
+.env  # Do NOT include .env inside Docker!
+__pycache__
+

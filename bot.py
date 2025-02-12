@@ -5,15 +5,19 @@ from calendar import monthrange
 from dotenv import load_dotenv
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 from timesheet_generator import generate_timesheet_excel
-from telegram.ext import MessageHandler, filters  # Add MessageHandler and filters
 from utils.utils import PUBLIC_HOLIDAYS, load_user_details  # Load dynamically
 from registration import register_new_user, capture_user_details, \
     handle_registration_buttons  # Import the missing function
 from de_registration import confirm_deregistration, handle_deregistration_buttons
+import asyncio
 
 # Load environment variables
 load_dotenv()
+
+# Global queue dictionary to queue tasks per user
+user_task_queues = {}
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -31,23 +35,21 @@ if not BOT_TOKEN:
 # In-memory storage for user inputs
 user_leaves = {}
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = str(update.effective_user.id)
 
-    # Reload user details dynamically
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = str(update.effective_user.id).strip()
+
     USER_DETAILS = load_user_details()
     user_details = USER_DETAILS.get(user_id)
 
     if user_details:
         name = user_details["name"]
 
-        # Months list without emojis
         months = [
             "January", "February", "March", "April", "May", "June",
             "July", "August", "September", "October", "November", "December"
         ]
 
-        # Arrange buttons in rows of 3 months per row
         buttons = [
             [InlineKeyboardButton(months[i], callback_data=f"month_{months[i]}"),
              InlineKeyboardButton(months[i + 1], callback_data=f"month_{months[i + 1]}"),
@@ -65,10 +67,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=reply_markup,
             parse_mode="Markdown"
         )
-
     else:
         logger.info(f"New user {user_id} detected. Redirecting to registration.")
-        await register_new_user(update, context)  # Redirect to registration
+        await register_new_user(update, context)
 
 
 # Handle Month Selection
@@ -92,7 +93,6 @@ async def month_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=reply_markup,
         parse_mode="Markdown"
     )
-
 
 
 # Handle Apply Leave
@@ -292,66 +292,78 @@ async def generate_timesheet(update: Update, context: ContextTypes.DEFAULT_TYPE)
     query = update.callback_query
     await query.answer()
 
-    user_id = str(update.effective_user.id)
+    user_id = str(update.effective_user.id).strip()
     month = context.user_data.get("month")
 
-    try:
-        if not month:
-            await query.message.reply_text("You must first select a month.")
-            return
+    if not month:
+        await query.message.reply_text("You must first select a month.")
+        return
 
-        logger.info(f"Generating timesheet for user {user_id} for month: {month}")
+    # Ensure a queue exists for the user
+    user_task_queues.setdefault(user_id, asyncio.Queue())
 
-        month_number = datetime.strptime(month, "%B").month
-        year = datetime.now().year
-        leave_data = user_leaves.get(user_id, {}).get(month, [])
+    # Add timesheet generation task to the queue
+    await user_task_queues[user_id].put((query, context))
 
-        # Debugging: Print stored leave data before processing
-        logger.info(f"Raw leave_data for user {user_id}: {leave_data}")
+    # Start processing the queue if it's the first task
+    if user_task_queues[user_id].qsize() == 1:
+        asyncio.create_task(process_queue(user_id))
 
-        parsed_leave_data = []
-        for leave_entry in leave_data:
-            try:
-                # Debugging: Print each leave entry before unpacking
-                logger.info(f"Processing leave entry: {leave_entry}")
 
-                # Check tuple length before unpacking
-                if not isinstance(leave_entry, tuple):
-                    raise ValueError(f"Unexpected type for leave_entry: {type(leave_entry)} - {leave_entry}")
-                if len(leave_entry) != 3:
-                    raise ValueError(f"Unexpected leave entry format: {leave_entry}")
+async def process_queue(user_id):
+    while not user_task_queues[user_id].empty():
+        query, context = await user_task_queues[user_id].get()
+
+        try:
+            month = context.user_data.get("month")
+            if not month:
+                await query.message.reply_text("You must first select a month.")
+                continue
+
+            logger.info(f"📝 Generating timesheet for user {user_id} for month: {month}")
+
+            month_number = datetime.strptime(month, "%B").month
+            year = datetime.now().year
+
+            # Ensure leave data exists
+            user_leaves.setdefault(user_id, {}).setdefault(month, [])
+
+            leave_data = user_leaves[user_id][month]
+            logger.info(f"Raw leave_data for user {user_id}: {leave_data}")
+
+            parsed_leave_data = []
+            for leave_entry in leave_data:
+                if not isinstance(leave_entry, tuple) or len(leave_entry) != 3:
+                    raise ValueError(f"Invalid leave entry format: {leave_entry}")
 
                 start_date_str, end_date_str, leave_type = leave_entry
-
-                # Debugging: Print extracted values
-                logger.info(f"Extracted - Start: {start_date_str}, End: {end_date_str}, Type: {leave_type}")
-
-                # Validate and convert date format
                 start_date_obj = datetime.strptime(start_date_str, "%d-%B").replace(year=year)
                 end_date_obj = datetime.strptime(end_date_str, "%d-%B").replace(year=year)
 
                 parsed_leave_data.append((start_date_obj.strftime("%d-%B"), end_date_obj.strftime("%d-%B"), leave_type))
 
-            except ValueError as e:
-                logger.error(f"Corrupt leave data detected: {leave_entry} - {e}")
-                await query.message.reply_text(f"Error: Corrupt leave data detected. Resetting data.")
-                user_leaves[user_id][month] = []
-                return
+            logger.info(f"Final parsed_leave_data for user {user_id}: {parsed_leave_data}")
 
-        # Debugging: Print processed leave data before generating timesheet
-        logger.info(f"Final parsed_leave_data: {parsed_leave_data}")
+            await asyncio.sleep(0.5)  # Delay to prevent race conditions
 
-        # Generate timesheet with correct format
-        output_file = generate_timesheet_excel(user_id, month_number, year, parsed_leave_data)
+            output_file = generate_timesheet_excel(user_id, month_number, year, parsed_leave_data)
 
-        with open(output_file, "rb") as doc:
-            await query.message.reply_document(document=doc, filename=os.path.basename(output_file))
+            if not os.path.exists(output_file):
+                raise FileNotFoundError(f"Timesheet file not found: {output_file}")
 
-        user_leaves[user_id][month] = []  # Clear only after successful generation
+            with open(output_file, "rb") as doc:
+                await query.message.reply_document(document=doc, filename=os.path.basename(output_file))
 
-    except Exception as e:
-        logger.error(f"Error generating timesheet: {e}")
-        await query.message.reply_text(f"Error generating timesheet: {e}")
+            # Clear leave data only after a successful generation
+            user_leaves[user_id][month] = []
+
+        except Exception as e:
+            logger.error(f"Error generating timesheet for user {user_id}: {e}")
+            await query.message.reply_text(f"Error generating timesheet: {e}")
+
+        # Ensure queue size is checked before calling `.task_done()`
+        if not user_task_queues[user_id].empty():
+            user_task_queues[user_id].task_done()
 
 
 # main function in bot.py
