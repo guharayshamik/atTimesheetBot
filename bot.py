@@ -288,6 +288,27 @@ async def end_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # Handle Generate Timesheet
+# async def generate_timesheet(update: Update, context: ContextTypes.DEFAULT_TYPE):
+#     query = update.callback_query
+#     await query.answer()
+#
+#     user_id = str(update.effective_user.id).strip()
+#     month = context.user_data.get("month")
+#
+#     if not month:
+#         await query.message.reply_text("You must first select a month.")
+#         return
+#
+#     # Ensure a queue exists for the user
+#     user_task_queues.setdefault(user_id, asyncio.Queue())
+#
+#     # Add timesheet generation task to the queue
+#     await user_task_queues[user_id].put((query, context))
+#
+#     # Start processing the queue if it's the first task
+#     if user_task_queues[user_id].qsize() == 1:
+#         asyncio.create_task(process_queue(user_id))
+
 async def generate_timesheet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -297,6 +318,24 @@ async def generate_timesheet(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     if not month:
         await query.message.reply_text("You must first select a month.")
+        return
+
+    # Ensure user details exist
+    USER_DETAILS = load_user_details()
+    user_details = USER_DETAILS.get(user_id, {})
+
+    # Required fields for generating a timesheet
+    required_keys = {"name", "skill_level", "role_specialization", "group_specialization", "contractor"}
+    missing_keys = required_keys - user_details.keys()
+
+    if missing_keys:
+        logger.warning(f"User ID {user_id} is missing required keys: {missing_keys}")
+        await query.message.reply_text(
+            "⚠️ *It looks like your registration is incomplete.*\n\n"
+            "Please complete your registration to generate a timesheet.\n"
+            "You can use /reset to clear your current profile and restart registration.",
+            parse_mode="Markdown"
+        )
         return
 
     # Ensure a queue exists for the user
