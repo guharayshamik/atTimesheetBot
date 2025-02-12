@@ -38,7 +38,7 @@ MAX_ATTEMPTS = int(config["rate_limit"]["MAX_ATTEMPTS"])
 TIME_WINDOW = int(config["rate_limit"]["TIME_WINDOW"])
 AWAIT = float(config["race"]["AWAIT"])
 
-print(f"MAX_ATTEMPTS: {MAX_ATTEMPTS}, TIME_WINDOW: {TIME_WINDOW}, AWAIT: {AWAIT}")
+#print(f"MAX_ATTEMPTS: {MAX_ATTEMPTS}, TIME_WINDOW: {TIME_WINDOW}, AWAIT: {AWAIT}")
 
 # Rate limiter dictionary {user_id: deque of timestamps}
 rate_limits = {}
@@ -85,12 +85,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         logger.info(f"User {name} ({user_id}) started the bot.")
 
-        # await update.message.reply_text(
-        #     f"👋 **Welcome back, {name}!**\n\n"
-        #     "📅 **Select a month for your timesheet:**",
-        #     reply_markup=reply_markup,
-        #     parse_mode="Markdown"
-        # )
         await message.reply_text(
             f"👋 **Welcome back, {name}!**\n\n"
             "📅 **Select a month for your timesheet:**",
@@ -196,35 +190,6 @@ async def show_start_date_selection(update: Update, context: ContextTypes.DEFAUL
     )
 
 
-    # Handle START DATE Selection
-# async def start_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-#     query = update.callback_query
-#     await query.answer()
-#
-#     try:
-#         # Ensure callback data has the correct format: start_date_6-June
-#         callback_data = query.data
-#         if not callback_data.startswith("start_date_"):
-#             logger.error(f"Invalid START DATE callback data: {callback_data}")
-#             await query.message.reply_text("⚠️ Invalid date format received.\n\nPlease restart using /start.")
-#             return
-#
-#         # Extract and validate the date
-#         selected_start_date = callback_data.replace("start_date_", "")
-#         datetime.strptime(selected_start_date, "%d-%B")  # Validate format
-#
-#         # Store the valid date in context
-#         context.user_data["start_date"] = selected_start_date
-#         logger.info(f"User selected START DATE: {selected_start_date}")
-#         print("selected_start_date chosen by user", selected_start_date)
-#
-#         # Move to END DATE selection
-#         await show_end_date_selection(update, context)
-#
-#     except ValueError:
-#         logger.error(f"Invalid date format received: {callback_data}")
-#         await query.message.reply_text("⚠️ Selected date format is incorrect. Please try again.")
-
 # Handle START DATE Selection
 async def start_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -282,7 +247,6 @@ async def start_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
     except ValueError:
         logger.error(f"Invalid date format received: {callback_data}")
         await query.message.reply_text("⚠️ Selected date format is incorrect. Please try again.")
-
 
 
 # Show END DATE Selection ( FIXED MISSING FUNCTION )
@@ -463,61 +427,6 @@ async def generate_timesheet(update: Update, context: ContextTypes.DEFAULT_TYPE)
     if user_task_queues[user_id].qsize() == 1:
         asyncio.create_task(process_queue(user_id))
 
-
-# async def process_queue(user_id):
-#     while not user_task_queues[user_id].empty():
-#         query, context = await user_task_queues[user_id].get()
-#
-#         try:
-#             month = context.user_data.get("month")
-#             if not month:
-#                 await query.message.reply_text("You must first select a month.")
-#                 continue
-#
-#             logger.info(f"📝 Generating timesheet for user {user_id} for month: {month}")
-#
-#             month_number = datetime.strptime(month, "%B").month
-#             year = datetime.now().year
-#
-#             # Ensure leave data exists
-#             user_leaves.setdefault(user_id, {}).setdefault(month, [])
-#
-#             leave_data = user_leaves[user_id][month]
-#             logger.info(f"Raw leave_data for user {user_id}: {leave_data}")
-#
-#             parsed_leave_data = []
-#             for leave_entry in leave_data:
-#                 if not isinstance(leave_entry, tuple) or len(leave_entry) != 3:
-#                     raise ValueError(f"Invalid leave entry format: {leave_entry}")
-#
-#                 start_date_str, end_date_str, leave_type = leave_entry
-#                 start_date_obj = datetime.strptime(start_date_str, "%d-%B").replace(year=year)
-#                 end_date_obj = datetime.strptime(end_date_str, "%d-%B").replace(year=year)
-#
-#                 parsed_leave_data.append((start_date_obj.strftime("%d-%B"), end_date_obj.strftime("%d-%B"), leave_type))
-#
-#             logger.info(f"Final parsed_leave_data for user {user_id}: {parsed_leave_data}")
-#
-#             await asyncio.sleep(AWAIT)  # Delay to prevent race conditions
-#
-#             output_file = generate_timesheet_excel(user_id, month_number, year, parsed_leave_data)
-#
-#             if not os.path.exists(output_file):
-#                 raise FileNotFoundError(f"Timesheet file not found: {output_file}")
-#
-#             with open(output_file, "rb") as doc:
-#                 await query.message.reply_document(document=doc, filename=os.path.basename(output_file))
-#
-#             # Clear leave data only after a successful generation
-#             user_leaves[user_id][month] = []
-#
-#         except Exception as e:
-#             logger.error(f"Error generating timesheet for user {user_id}: {e}")
-#             await query.message.reply_text(f"Error generating timesheet: {e}")
-#
-#         # Ensure queue size is checked before calling `.task_done()`
-#         if not user_task_queues[user_id].empty():
-#             user_task_queues[user_id].task_done()
 
 async def process_queue(user_id):
     while not user_task_queues[user_id].empty():
