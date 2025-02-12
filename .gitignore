@@ -1,3 +1,7 @@
 .env
 **/__pycache__/
+# Ignore everything inside generated_timesheets/
+generated_timesheets/*
 
+# But allow .gitkeep
+!generated_timesheets/.gitkeep
