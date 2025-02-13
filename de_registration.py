@@ -26,7 +26,7 @@ async def confirm_deregistration(update: Update, context: ContextTypes.DEFAULT_T
 
     # Confirmation message with buttons
     buttons = [
-        [InlineKeyboardButton("✅ Yes, Reset My Data", callback_data="deregister_confirm")],
+        [InlineKeyboardButton("✅ Yes, Remove My Data", callback_data="deregister_confirm")],
         [InlineKeyboardButton("❌ No, Keep My Data", callback_data="deregister_cancel")]
     ]
     reply_markup = InlineKeyboardMarkup(buttons)

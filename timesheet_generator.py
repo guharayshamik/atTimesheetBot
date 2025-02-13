@@ -35,6 +35,9 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     description = user_details["description"]
     reporting_officer = user_details["reporting_officer"]
 
+    # ✅ Fetch timesheet preference (Default to 1.0 if not set)
+    timesheet_preference = float(user_details.get("timesheet_preference", 1.0))  # Convert to float
+
     # File Setup
     month_name = datetime(year, month, 1).strftime("%B")
     filename = f"{month_name}_{year}_Timesheet_{name.replace(' ', '_')}.xlsx"
@@ -204,8 +207,9 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
         public_holiday_check = date_obj.strftime("%Y-%m-%d")  # Match keys in PUBLIC_HOLIDAYS
         weekday = date_obj.weekday()
 
-        # Default Values as Floats
-        at_work, public_holiday, sick_leave, childcare_leave, annual_leave = 1.0, 0.0, 0.0, 0.0, 0.0
+        # ✅ Set "At Work" value dynamically based on timesheet preference
+        at_work = timesheet_preference if weekday not in [5, 6] else 0.0  # Default to user preference, except weekends
+        public_holiday, sick_leave, childcare_leave, annual_leave = 0.0, 0.0, 0.0, 0.0
         remark = "-"  # Default empty remark
 
         # **Handle Weekends**
