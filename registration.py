@@ -107,7 +107,7 @@ async def capture_user_details(update: Update, context: ContextTypes.DEFAULT_TYP
                                         parse_mode="MarkdownV2")
 
     elif step == "po_date":
-        user_details[user_id]["po_date"] = sanitized_message
+        user_details[user_id]["po_date"] = user_message  # Direct assignment without sanitization
         context.user_data["registration_step"] = "description"
         save_user_data(user_details)
         await update.message.reply_text("↘️ Enter your Job Description:\n\neg:\n```\nAgile Co-Development Services\n```",
