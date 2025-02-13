@@ -85,11 +85,17 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         logger.info(f"User {name} ({user_id}) started the bot.")
 
+        # await message.reply_text(
+        #     f"👋 **Welcome back, {name}!**\n\n"
+        #     "📅 **Select a month for your timesheet:**",
+        #     reply_markup=reply_markup,
+        #     parse_mode="Markdown"
+        # )
         await message.reply_text(
-            f"👋 **Welcome back, {name}!**\n\n"
-            "📅 **Select a month for your timesheet:**",
+            f"👋 Welcome back, <b>{name}</b>!\n\n"
+            "📅 Select a month for your <b>timesheet</b>:",
             reply_markup=reply_markup,
-            parse_mode="Markdown"
+            parse_mode="HTML"
         )
     else:
         logger.info(f"New user {user_id} detected. Redirecting to registration.")
@@ -113,11 +119,17 @@ async def month_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(buttons)
 
+    # await query.message.reply_text(
+    #     f"📆 **You selected {selected_month}**\n\n"
+    #     "Would you like to apply for leave before generating your timesheet?",
+    #     reply_markup=reply_markup,
+    #     parse_mode="Markdown"
+    # )
     await query.message.reply_text(
-        f"📆 **You selected {selected_month}**\n\n"
+        f"📆 You selected <b>{selected_month}</b>\n\n"
         "Would you like to apply for leave before generating your timesheet?",
         reply_markup=reply_markup,
-        parse_mode="Markdown"
+        parse_mode="HTML"
     )
 
 
@@ -141,12 +153,16 @@ async def show_leave_type_selection(update: Update, context: ContextTypes.DEFAUL
     ]
     reply_markup = InlineKeyboardMarkup(buttons)
     #await query.message.reply_text("Please choose the leave type:", reply_markup=reply_markup)
+    # await query.message.reply_text(
+    #     "**Please choose the type of leave you want to apply for:**",
+    #     reply_markup=reply_markup,
+    #     parse_mode="Markdown"
+    # )
     await query.message.reply_text(
-        "**Please choose the type of leave you want to apply for:**",
+        "Please choose the <b>type</b> of leave you want to apply for:",
         reply_markup=reply_markup,
-        parse_mode="Markdown"
+        parse_mode="HTML"
     )
-
 
 # Handle Leave Type Selection
 async def leave_type_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -183,12 +199,16 @@ async def show_start_date_selection(update: Update, context: ContextTypes.DEFAUL
         buttons.append(row)
 
     reply_markup = InlineKeyboardMarkup(buttons)
+    # await query.message.reply_text(
+    #     "📆 **Select the START DATE for your leave:**",
+    #     reply_markup=reply_markup,
+    #     parse_mode="Markdown"
+    # )
     await query.message.reply_text(
-        "📆 **Select the START DATE for your leave:**",
+        "📆 Select the <b>START DATE</b> for your leave:",
         reply_markup=reply_markup,
-        parse_mode="Markdown"
+        parse_mode="HTML"
     )
-
 
 # Handle START DATE Selection
 async def start_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -272,12 +292,16 @@ async def show_end_date_selection(update: Update, context: ContextTypes.DEFAULT_
         buttons.append(row)
 
     reply_markup = InlineKeyboardMarkup(buttons)
+    # await query.message.reply_text(
+    #     "📆 **Select the END DATE for your leave:**",
+    #     reply_markup=reply_markup,
+    #     parse_mode="Markdown"
+    # )
     await query.message.reply_text(
-        "📆 **Select the END DATE for your leave:**",
+        "📆 Select the <b>END DATE</b> for your leave:",
         reply_markup=reply_markup,
-        parse_mode="Markdown"
+        parse_mode="HTML"
     )
-
 
 # Handle END DATE Selection
 async def end_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
