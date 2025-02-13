@@ -383,7 +383,7 @@ async def generate_timesheet(update: Update, context: ContextTypes.DEFAULT_TYPE)
     user_details = USER_DETAILS.get(user_id, {})
 
     # Required fields for generating a timesheet
-    required_keys = {"name", "skill_level", "role_specialization", "group_specialization", "contractor"}
+    required_keys = {"name", "timesheet_preference", "skill_level", "role_specialization", "group_specialization", "contractor"}
     missing_keys = required_keys - user_details.keys()
 
     if missing_keys:
@@ -558,7 +558,7 @@ def main():
 
     # Fix: Add CallbackQueryHandler for handling quick-select buttons
     application.add_handler(
-        CallbackQueryHandler(handle_registration_buttons, pattern="^(skill_level|role_specialization|contractor)_.+"))
+        CallbackQueryHandler(handle_registration_buttons, pattern="^(timesheet_preference|skill_level|role_specialization|contractor)_.+"))
 
     application.add_handler(CallbackQueryHandler(month_handler, pattern="^month_"))
     application.add_handler(CallbackQueryHandler(apply_leave, pattern="^apply_leave$"))
