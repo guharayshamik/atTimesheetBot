@@ -3,18 +3,23 @@ from openpyxl.styles import Alignment, Font, PatternFill, Border
 from datetime import datetime, timedelta
 from calendar import monthrange
 import os
+import logging
 from utils.utils import PUBLIC_HOLIDAYS, load_user_details  # Import function instead of USER_DETAILS
 from styles import (  # Import styles from styles.py
     thin_border, white_fill, yellow_fill, light_green_fill, lighter_green_fill, light_yellow_fill, light_blue_fill,
     light_red_fill, bold_font, red_font, black_font, center_alignment, right_alignment)
 
-
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
 
 def generate_timesheet_excel(user_id, month, year, leave_details):
     USER_DETAILS = load_user_details()
     user_details = USER_DETAILS.get(user_id)
     if not user_details:
         raise ValueError(f"User with ID {user_id} not found.")
+
+    ns_leave_present = any(leave_type == "NS Leave" for _, _, leave_type in leave_details)
+
 
     name = user_details["name"]
     skill_level = user_details["skill_level"]
@@ -25,8 +30,11 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     po_date = user_details["po_date"]
     description = user_details["description"]
     reporting_officer = user_details["reporting_officer"]
-    # ✅ Fetch timesheet preference (Default to 1.0 if not set)
+    # Fetch timesheet preference (Default to 1.0 if not set)
     timesheet_preference = float(user_details.get("timesheet_preference", 1.0))
+
+    # **Check if NS Leave exists in the given month**
+   # ns_leave_present = any(leave_type == "NS Leave" for _, leave_type in leave_details)
 
     # File Setup
     month_name = datetime(year, month, 1).strftime("%B")
@@ -155,40 +163,91 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     for row in range(6, 9):
         ws[f"B{row}"].alignment = Alignment(horizontal="left", vertical="bottom")  # Left align
 
-    # Table Headers
-    headers = ["SN", "Date", "At Work", "Public Holiday", "Sick Leave", "Childcare Leave", "Annual Leave", "Remarks"]
-    header_fills = [white_fill, white_fill, light_green_fill, light_yellow_fill, lighter_green_fill, white_fill,
-                    light_blue_fill, white_fill]  # Corresponding fill colors
+    # # Table Headers
+    # headers = ["SN", "Date", "At Work", "Public Holiday", "Sick Leave", "Childcare Leave", "Annual Leave", "Remarks"]
+    # **Table Headers**
+    headers = ["SN", "Date", "At Work", "Public Holiday", "Sick Leave", "Childcare Leave", "Annual Leave"]
+    if ns_leave_present:
+        headers.append("NS Leave")  # Add NS Leave column only if applicable
+    headers.append("Remarks")  # Add Remarks at the end
+
+    header_fills = [
+        white_fill, white_fill, light_green_fill, light_yellow_fill, lighter_green_fill, white_fill, light_blue_fill
+    ]
+    if ns_leave_present:
+        header_fills.append(light_red_fill)  # Color for NS Leave
+    header_fills.append(white_fill)
+
+    # **Create Table Headers Dynamically**
     for col_num, (header, fill) in enumerate(zip(headers, header_fills), 1):
         cell = ws.cell(row=10, column=col_num, value=header)
 
-    # Apply the same font and styling to ALL headers, including "Remarks"
-    cell.font = Font(name="Arial", size=12, bold=True, color="000000")  # Bold Arial 12, black text
-    cell.alignment = Alignment(horizontal="center", vertical="center")  # Center alignment
-    cell.border = thin_border  # Apply thin border
-    cell.fill = fill  # Apply the respective color
+        # Apply font and styling dynamically
+        is_sn_column = col_num == 1  # SN column
+        cell.font = Font(name="Arial", size=12, bold=not is_sn_column, color="000000")  # SN should be non-bold
+        cell.alignment = Alignment(horizontal="center", vertical="center")  # Center alignment
+        cell.border = thin_border  # Apply thin border
+        cell.fill = fill  # Apply respective color
 
-    # Ensure "Remarks" header (Column 8) is formatted the same way
-    ws["H10"].font = Font(name="Arial", size=12, bold=False, color="000000")  # Match font
+    # Adjust column width dynamically based on NS Leave presence
+    if ns_leave_present:
+        ws.column_dimensions["I"].width = 12  # Ensure NS Leave column has proper width
+        remarks_col = "J"  # Remarks moves to J
+    else:
+        remarks_col = "I"  # Remarks remains in I
 
-    # **Expand Leave Data**
+    # Ensure SN column (A10) matches the Remarks column formatting (non-bold, middle-aligned)
+    ws["A10"].font = Font(name="Arial", size=12, bold=False, color="000000")  # Make SN non-bold
+    ws["A10"].alignment = Alignment(horizontal="center", vertical="center")  # Middle-aligned like Remarks
+    ws["A10"].border = thin_border  # Keep border styling
+
+    # # Ensure "Remarks" header (Column 8) is formatted the same way
+    # ws["H10"].font = Font(name="Arial", size=12, bold=False, color="000000")  # Match font
+    # Determine the correct column letter for Remarks based on NS Leave presence
+    remarks_column_letter = "I" if ns_leave_present else "H"
+    # Ensure "Remarks" header is formatted the same way
+    ws[f"{remarks_column_letter}10"].font = Font(name="Arial", size=12, bold=False, color="000000")  # Match font
+
     expanded_leave_details = []
-    for leave_entry in leave_details:
-        if len(leave_entry) == 3:  # (start_date, end_date, leave_type)
-            start_date, end_date, leave_type = leave_entry
-            start_date = datetime.strptime(start_date, "%d-%B").replace(year=year)
-            end_date = datetime.strptime(end_date, "%d-%B").replace(year=year)
 
-            while start_date <= end_date:
-                expanded_leave_details.append((start_date.strftime("%Y-%m-%d"), leave_type))
-                start_date += timedelta(days=1)
-        else:
-            expanded_leave_details.append(leave_entry)
+    try:
+        for leave_entry in leave_details:
+            if isinstance(leave_entry, tuple) and len(leave_entry) == 3:
+                start_date, end_date, leave_type = leave_entry
+                logging.info(f"Expanding leave range: {start_date} to {end_date} ({leave_type})")
+
+                start_date = datetime.strptime(start_date, "%d-%B").replace(year=year)
+                end_date = datetime.strptime(end_date, "%d-%B").replace(year=year)
+
+                while start_date <= end_date:
+                    expanded_leave_details.append((start_date.strftime("%Y-%m-%d"), leave_type))  # NS Leave Included
+                    start_date += timedelta(days=1)
+
+
+            elif isinstance(leave_entry, tuple) and len(leave_entry) == 2:
+                # Direct (date, leave_type) entry
+                date_str, leave_type = leave_entry
+                try:
+                    formatted_date = datetime.strptime(date_str, "%d-%B").replace(year=year).strftime("%Y-%m-%d")
+                    expanded_leave_details.append((formatted_date, leave_type))
+                except ValueError:
+                    logging.error(f"Invalid date format in leave entry: {leave_entry}")
+
+            else:
+                logging.error(f"Unexpected leave format: {leave_entry}")
+                continue  # Skip invalid entries
+
+        logging.info(f"Final expanded leave details: {expanded_leave_details}")
+
+    except Exception as e:
+        logging.error(f"Error processing leave details: {e}")
 
     # **Data Rows**
     current_row = 11
     _, days_in_month = monthrange(year, month)
     totals = {"At Work": 0.0, "Public Holiday": 0.0, "Sick Leave": 0.0, "Childcare Leave": 0.0, "Annual Leave": 0.0}
+    if ns_leave_present:
+        totals["NS Leave"] = 0.0  # Initialize NS Leave Total
 
     for day in range(1, days_in_month + 1):
         date_obj = datetime(year, month, day)
@@ -196,9 +255,10 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
         public_holiday_check = date_obj.strftime("%Y-%m-%d")  # Match keys in PUBLIC_HOLIDAYS
         weekday = date_obj.weekday()
 
-        # ✅ Set "At Work" value dynamically based on timesheet preference
+        # Set "At Work" value dynamically based on timesheet preference
         at_work = timesheet_preference if weekday not in [5, 6] else 0.0
-        public_holiday, sick_leave, childcare_leave, annual_leave = 0.0, 0.0, 0.0, 0.0  # Default to user preference, except weekends
+        # public_holiday, sick_leave, childcare_leave, annual_leave = 0.0, 0.0, 0.0, 0.0  # Default to user preference, except weekends
+        public_holiday, sick_leave, childcare_leave, annual_leave, ns_leave = 0.0, 0.0, 0.0, 0.0, 0.0
         remark = "-"  # Default empty remark
         # **Handle Weekends**
         if weekday == 5:
@@ -215,91 +275,179 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
             remark = PUBLIC_HOLIDAYS[public_holiday_check]
 
         for leave_date, leave_type in expanded_leave_details:
+            logger.debug(f"Processing Leave Date: {leave_date}, Type: {leave_type}")
             if leave_date == date_obj.strftime("%Y-%m-%d"):
                 if leave_type == "Sick Leave":
-                    # ✅ Sick Leave should NOT apply on weekends or public holidays
+                    # Sick Leave should NOT apply on weekends or public holidays
                     if weekday not in [5, 6] and public_holiday_check not in PUBLIC_HOLIDAYS:
                         sick_leave = 1.0
                         at_work = 0.0
                 elif leave_type == "Childcare Leave":
-                    # ✅ Childcare Leave should NOT apply on weekends or public holidays
+                    # Childcare Leave should NOT apply on weekends or public holidays
                     if weekday not in [5, 6] and public_holiday_check not in PUBLIC_HOLIDAYS:
                         childcare_leave = 1.0
                         at_work = 0.0
                 elif leave_type == "Annual Leave":
-                    # ✅ Annual Leave should NOT apply on weekends or public holidays
+                    # Annual Leave should NOT apply on weekends or public holidays
                     if weekday not in [5, 6] and public_holiday_check not in PUBLIC_HOLIDAYS:
                         annual_leave = 1.0
                         at_work = 0.0
+                elif leave_type == "NS Leave":
+                    if weekday not in [5, 6] and public_holiday_check not in PUBLIC_HOLIDAYS:
+                        ns_leave = 1.0
+                        at_work = 0.0  # No work on NS Leave
                 elif leave_type == "Weekend Efforts":
-                    # ✅ Only update at_work if it's a Saturday, Sunday, or Public Holiday
+                    # Only update at_work if it's a Saturday, Sunday, or Public Holiday
                     if weekday in [5, 6] or public_holiday_check in PUBLIC_HOLIDAYS:
                         at_work = 8.0 if timesheet_preference == 8.5 else 1.0
                 elif leave_type == "Public Holiday Efforts":
-                    # ✅ Only update at_work if it's a Public Holiday
+                    # Only update at_work if it's a Public Holiday
                     if public_holiday_check in PUBLIC_HOLIDAYS:
                         at_work = 8.0 if timesheet_preference == 8.5 else 1.0
                 elif leave_type == "Half Day":
-                    at_work = 4.5 if timesheet_preference == 8.5 else 0.5
+                    # Half Day Handling:
+                    # - If timesheet preference is 8.5:
+                    #   - Monday to Thursday: Half day = 4.5 hours
+                    #   - Friday: Half day = 4.0 hours
+                    # - If timesheet preference is 1.0:
+                    #   - Monday to Friday: Half day = 0.5 hours
+
+                    if timesheet_preference == 8.5:
+                        at_work = 4.5 if weekday not in [4] else 4.0  # Friday (4) gets 4.0 hours
+                    else:
+                        at_work = 0.5  # All weekdays get 0.5 hours
 
         totals["At Work"] += at_work if isinstance(at_work, float) else 0.0
         totals["Public Holiday"] += public_holiday
         totals["Sick Leave"] += sick_leave
         totals["Childcare Leave"] += childcare_leave
         totals["Annual Leave"] += annual_leave
+        if ns_leave_present:
+            totals["NS Leave"] += ns_leave
 
+        # row_data = [current_row - 1, formatted_date, at_work, public_holiday, sick_leave, childcare_leave, annual_leave]
+        # if ns_leave_present:
+        #     row_data.append(ns_leave)  # Add NS Leave column data
+        # row_data.append(remark)  # Always add Remarks
+        # Replace 0.0 with an empty string to keep cells blank instead of showing 0.0
         row_data = [
             current_row - 1,
             formatted_date,
-            at_work if at_work != 0.0 else "",
-            public_holiday if public_holiday != 0.0 else "-",
-            sick_leave if sick_leave != 0.0 else "",
-            childcare_leave if childcare_leave != 0.0 else "",
-            annual_leave if annual_leave != 0.0 else "",
-            remark
+            "" if at_work == 0.0 else at_work,
+            "" if public_holiday == 0.0 else public_holiday,
+            "" if sick_leave == 0.0 else sick_leave,
+            "" if childcare_leave == 0.0 else childcare_leave,
+            "" if annual_leave == 0.0 else annual_leave,
         ]
+
+        if ns_leave_present:
+            row_data.append("" if ns_leave == 0.0 else ns_leave)  # Handle NS Leave blank cells
+
+        row_data.append(remark)  # Always add Remarks
 
         for col_num, value in enumerate(row_data, 1):
             cell = ws.cell(row=current_row, column=col_num, value=value)
             cell.alignment = center_alignment
             cell.border = thin_border
-            # Highlight Leave & Public Holiday Cells
-            if col_num in [3, 4, 5, 6, 7]:  # At Work, Public Holiday, Sick Leave, Childcare Leave, Annual Leave
-                cell.fill = yellow_fill if value not in ["", "-"] else white_fill
-            # Highlight Remarks for Public Holidays & Leaves | remove redudant  code
-            if col_num == 8 and remark not in ["-", ""]:
-                cell.fill = light_red_fill
-            #   cell.font = bold_font
+            # # Highlight Leave & Public Holiday Cells
+            # if col_num in [3, 4, 5, 6, 7]:  # At Work, Public Holiday, Sick Leave, Childcare Leave, Annual Leave
+            #     cell.fill = yellow_fill if value not in ["", "-"] else white_fill
 
-            # Ensure numeric values are stored as proper numbers in Excel (Prevents text errors)
-            for col_num in [3, 4, 5, 6,
-                            7]:  # C=At Work, D=Public Holiday, E=Sick Leave, F=Childcare Leave, G=Annual Leave
-                ws.cell(row=current_row, column=col_num).number_format = "0.0"  # Set as number with 1 decimal place
+            # Determine the correct column index for NS Leave based on its presence
+            ns_leave_column_index = 8 if ns_leave_present else None
+
+            # Highlight Leave & Public Holiday Cells
+            leave_columns = [3, 4, 5, 6, 7]  # At Work, Public Holiday, Sick Leave, Childcare Leave, Annual Leave
+            if ns_leave_present:
+                leave_columns.append(ns_leave_column_index)  # Add NS Leave column if present
+
+            if col_num in leave_columns:
+                cell.fill = yellow_fill if value not in ["", "-"] else white_fill
+
+            # Highlight Remarks for Public Holidays & Leaves | remove redudant  code
+            # if col_num == 8 and remark not in ["-", ""]:
+            #     cell.fill = light_red_fill
+            # #   cell.font = bold_font
+            # Determine the correct column index for Remarks based on NS Leave presence
+            remarks_column_index = 9 if ns_leave_present else 8
+
+            # Highlight Remarks for Public Holidays & Leaves
+            if col_num == remarks_column_index and remark not in ["-", ""]:
+                cell.fill = light_red_fill
+
+            leave_columns = [3, 4, 5, 6, 7]  # At Work, Public Holiday, Sick Leave, Childcare Leave, Annual Leave
+            if ns_leave_present:
+                leave_columns.append(8)  # NS Leave column (H)
+
+            for col_num in leave_columns:
+                ws.cell(row=current_row, column=col_num).number_format = "0.0"  # Ensure 1 decimal place
 
         # Remove yellow for PH column and add yellow_fill to Date column
+        # # Apply Yellow Fill to "Date" Column (B) but NOT to Public Holiday (D)
+        # for row in range(11, 11 + days_in_month):  # Assuming row 11 is the first data row
+        #     ws[f"B{row}"].fill = yellow_fill  # Apply Yellow Fill to Date Column
+        #
+        # # Apply Yellow Fill for "At Work", "Sick Leave", "Childcare Leave", and "Annual Leave" Columns (C, E, F, G)
+        # for row in range(11, 11 + days_in_month):
+        #     for col_num in [3, 5, 6, 7]:  # C=At Work, E=Sick Leave, F=Childcare Leave, G=Annual Leave
+        #         cell = ws.cell(row=row, column=col_num)
+        #         cell.fill = yellow_fill
+        #
+        # # Ensure "Public Holiday" (D) is NOT Yellow
+        # for row in range(11, 11 + days_in_month):
+        #     ws[f"D{row}"].fill = PatternFill(fill_type=None)  # Remove yellow fill from Public Holiday
+        #
+        # # Apply right aligned for At Work, Public Holiday, Sick Leave, Childcare Leave, and Annual Leave up to row 31
+        # for row in range(11, 11 + days_in_month):  # Assuming row 11 is the first data row, row 41 is the last (31st day)
+        #     for col_num in [3, 4, 5, 6,
+        #                     7]:  # Columns: At Work (C), Sick Leave (E), Childcare Leave (F), Annual Leave (G)
+        #         cell = ws.cell(row=row, column=col_num)
+        #         cell.alignment = right_alignment
+        #
+        # for row in range(11, 53):  # Adjusting for row range from 11 to 42 (inclusive)
+        #     cell = ws.cell(row=row, column=8)  # Column 8 is "Remarks"
+        #     if cell.value not in ["-", ""]:  # Apply styles only to meaningful values
+        #         cell.font = red_font
+        #         cell.alignment = right_alignment  # Apply right alignment
+        #     else:  # If the value is "-", keep it black
+        #         cell.font = black_font
+        #         cell.alignment = right_alignment
         # Apply Yellow Fill to "Date" Column (B) but NOT to Public Holiday (D)
         for row in range(11, 11 + days_in_month):  # Assuming row 11 is the first data row
             ws[f"B{row}"].fill = yellow_fill  # Apply Yellow Fill to Date Column
 
-        # Apply Yellow Fill for "At Work", "Sick Leave", "Childcare Leave", and "Annual Leave" Columns (C, E, F, G)
+        # Determine the correct column indexes dynamically
+        at_work_col, public_holiday_col, sick_leave_col, childcare_leave_col, annual_leave_col = 3, 4, 5, 6, 7
+        ns_leave_col = 8 if ns_leave_present else None  # NS Leave column is 8 if present, else None
+        remarks_col = 9 if ns_leave_present else 8  # Remarks column shifts to 9 if NS Leave exists
+
+        # Apply Yellow Fill for "At Work", "Sick Leave", "Childcare Leave", Annual Leave, and NS Leave (if applicable)
+        leave_columns = [at_work_col, sick_leave_col, childcare_leave_col, annual_leave_col]
+        if ns_leave_present:
+            leave_columns.append(ns_leave_col)  # Include NS Leave in yellow fill columns
+
         for row in range(11, 11 + days_in_month):
-            for col_num in [3, 5, 6, 7]:  # C=At Work, E=Sick Leave, F=Childcare Leave, G=Annual Leave
+            for col_num in leave_columns:  # Apply Yellow Fill to all leave-related columns
                 cell = ws.cell(row=row, column=col_num)
                 cell.fill = yellow_fill
 
         # Ensure "Public Holiday" (D) is NOT Yellow
         for row in range(11, 11 + days_in_month):
-            ws[f"D{row}"].fill = PatternFill(fill_type=None)  # Remove yellow fill from Public Holiday
+            ws[f"D{row}"].fill = PatternFill(fill_type=None)  # Remove yellow fill from Public Holiday column
 
-        # Apply right aligned for At Work, Public Holiday, Sick Leave, Childcare Leave, and Annual Leave up to row 31
-        for row in range(11, 11 + days_in_month):  # Assuming row 11 is the first data row, row 41 is the last (31st day)
-            for col_num in [3, 4, 5, 6,
-                            7]:  # Columns: At Work (C), Sick Leave (E), Childcare Leave (F), Annual Leave (G)
+        # Apply right alignment for At Work, Public Holiday, Sick Leave, Childcare Leave, Annual Leave, and NS Leave (if applicable)
+        align_columns = [at_work_col, public_holiday_col, sick_leave_col, childcare_leave_col, annual_leave_col]
+        if ns_leave_present:
+            align_columns.append(ns_leave_col)  # Add NS Leave if present
+
+        for row in range(11, 11 + days_in_month):
+            for col_num in align_columns:
                 cell = ws.cell(row=row, column=col_num)
-                cell.alignment = right_alignment
+                cell.alignment = right_alignment  # Apply right alignment
 
+        # Apply formatting to Remarks column dynamically
         for row in range(11, 53):  # Adjusting for row range from 11 to 42 (inclusive)
-            cell = ws.cell(row=row, column=8)  # Column 8 is "Remarks"
+            cell = ws.cell(row=row, column=remarks_col)  # Dynamic Remarks column
             if cell.value not in ["-", ""]:  # Apply styles only to meaningful values
                 cell.font = red_font
                 cell.alignment = right_alignment  # Apply right alignment
@@ -378,17 +526,46 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     for row in range(current_row + 2, current_row + 9):
         ws[f"A{row}"].alignment = Alignment(horizontal="left", vertical="bottom")
 
-    # Apply Arial 12 font to all cells EXCEPT Remarks (Column 8)
+    # Determine the correct column index for Remarks based on NS Leave presence
+    remarks_column_index = 9 if ns_leave_present else 8  # 9 = "I", 8 = "H"
+
     arial_font = Font(name="Arial", size=12)
 
     for row in ws.iter_rows(min_row=1, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
         for cell in row:
-            if cell.column != 8 and cell.row != current_row:  # Exclude "Total" row from being overwritten AND Skip column 8 to retain red font for public holidays
+            # Apply Arial font to all columns except the dynamically determined Remarks column
+            if cell.column != remarks_column_index and cell.row != current_row:
                 cell.font = arial_font  # Apply Arial 12 font
 
     # Now, Ensure Remarks Column (Column 8) Uses Arial 12 But Keeps Public Holidays Red
+    # for row in range(11, 11 + days_in_month):
+    #     cell = ws.cell(row=row, column=8)  # Remarks column
+    #     date_cell = ws.cell(row=row, column=2)  # Date column to determine the weekday
+    #
+    #     if date_cell.value:
+    #         try:
+    #             date_obj = datetime.strptime(date_cell.value, "%d-%B-%Y")  # Convert date to object
+    #             weekday = date_obj.weekday()  # Get weekday (0 = Monday, 6 = Sunday)
+    #         except ValueError:
+    #             weekday = None  # In case date format is incorrect
+    #
+    #     if cell.value and cell.value not in ["-", ""]:  # Apply styles only to meaningful values
+    #         #cell_value = cell.value.strip().lower()
+    #         cell_value = str(cell.value).strip().lower()
+    #
+    #         # Check if the remark is a public holiday or weekend (Saturday/Sunday)
+    #         if any(holiday.lower() in cell_value for holiday in PUBLIC_HOLIDAYS.values()) or weekday in [5, 6]:
+    #             cell.font = Font(name="Arial", size=12, color="FF0000",
+    #                              bold=False)  # Keep red font for public holidays & weekends
+    #         else:
+    #             cell.font = Font(name="Arial", size=12, color="000000", bold=False)  # Apply Arial 12 for other remarks
+    #     else:  # If the value is "-", keep it black and in Arial
+    #         cell.font = Font(name="Arial", size=12, color="000000", bold=False)
+    # Determine Remarks column index based on NS Leave presence
+    remarks_column = 9 if ns_leave_present else 8
+
     for row in range(11, 11 + days_in_month):
-        cell = ws.cell(row=row, column=8)  # Remarks column
+        cell = ws.cell(row=row, column=remarks_column)  # Remarks column
         date_cell = ws.cell(row=row, column=2)  # Date column to determine the weekday
 
         if date_cell.value:
@@ -399,12 +576,11 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
                 weekday = None  # In case date format is incorrect
 
         if cell.value and cell.value not in ["-", ""]:  # Apply styles only to meaningful values
-            cell_value = cell.value.strip().lower()
+            cell_value = str(cell.value).strip().lower()
 
             # Check if the remark is a public holiday or weekend (Saturday/Sunday)
             if any(holiday.lower() in cell_value for holiday in PUBLIC_HOLIDAYS.values()) or weekday in [5, 6]:
-                cell.font = Font(name="Arial", size=12, color="FF0000",
-                                 bold=False)  # Keep red font for public holidays & weekends
+                cell.font = Font(name="Arial", size=12, color="FF0000", bold=False)  # Keep red font for PH & weekends
             else:
                 cell.font = Font(name="Arial", size=12, color="000000", bold=False)  # Apply Arial 12 for other remarks
         else:  # If the value is "-", keep it black and in Arial

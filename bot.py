@@ -14,6 +14,7 @@ import asyncio
 from collections import deque
 import time
 import configparser
+import traceback
 
 
 # Configure logging
@@ -85,12 +86,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         logger.info(f"User {name} ({user_id}) started the bot.")
 
-        # await message.reply_text(
-        #     f"👋 **Welcome back, {name}!**\n\n"
-        #     "📅 **Select a month for your timesheet:**",
-        #     reply_markup=reply_markup,
-        #     parse_mode="Markdown"
-        # )
         await message.reply_text(
             f"👋 Welcome back, <b>{name}</b>!\n\n"
             "📅 Select a month for your <b>timesheet</b>:",
@@ -112,26 +107,15 @@ async def month_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["waiting_for_button"] = True  # Expect button input next
 
     logger.info(f"User {update.effective_user.id} selected month: {selected_month}")
-    #
-    # buttons = [
-    #     [InlineKeyboardButton("📝 Apply Leave", callback_data="apply_leave")],
-    #     [InlineKeyboardButton("📊 Generate Timesheet Without Leave", callback_data="generate_timesheet_now")]
-    # ]
 
     buttons = [
         [InlineKeyboardButton("📝 Apply Leave", callback_data="apply_leave")],
-        [InlineKeyboardButton("🔧 Add Weekends Efforts / Half Day Efforts / NS Leave", callback_data="special_efforts")],
+        [InlineKeyboardButton("🔧 Add NS Leave / Weekends Efforts / Half Day Efforts", callback_data="special_efforts")],
         [InlineKeyboardButton("📊 Generate Timesheet Without Leave", callback_data="generate_timesheet_now")]
     ]
 
     reply_markup = InlineKeyboardMarkup(buttons)
 
-    # await query.message.reply_text(
-    #     f"📆 **You selected {selected_month}**\n\n"
-    #     "Would you like to apply for leave before generating your timesheet?",
-    #     reply_markup=reply_markup,
-    #     parse_mode="Markdown"
-    # )
     await query.message.reply_text(
         f"📆 You selected <b>{selected_month}</b>\n\n"
         "Would you like to apply for leave before generating your timesheet?",
@@ -212,12 +196,7 @@ async def show_leave_type_selection(update: Update, context: ContextTypes.DEFAUL
         [InlineKeyboardButton("Annual Leave", callback_data="leave_Annual Leave")]
     ]
     reply_markup = InlineKeyboardMarkup(buttons)
-    #await query.message.reply_text("Please choose the leave type:", reply_markup=reply_markup)
-    # await query.message.reply_text(
-    #     "**Please choose the type of leave you want to apply for:**",
-    #     reply_markup=reply_markup,
-    #     parse_mode="Markdown"
-    # )
+
     await query.message.reply_text(
         "Please choose the <b>type</b> of leave you want to apply for:",
         reply_markup=reply_markup,
@@ -259,11 +238,7 @@ async def show_start_date_selection(update: Update, context: ContextTypes.DEFAUL
         buttons.append(row)
 
     reply_markup = InlineKeyboardMarkup(buttons)
-    # await query.message.reply_text(
-    #     "📆 **Select the START DATE for your leave:**",
-    #     reply_markup=reply_markup,
-    #     parse_mode="Markdown"
-    # )
+
     leave_type = context.user_data.get("leave_type", "Leave")  # Default to "Leave" if not specified
 
     # Customize text based on leave type
@@ -318,7 +293,7 @@ async def start_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 logger.warning(f"User {user_id} attempted overlapping start date: {selected_start_date}")
                 await query.message.reply_text(
                     f"⚠️ The selected START DATE *overlaps* with an existing leave:\n"
-                    f"📅 {existing_start} - {existing_end} ({existing_leave_type})\n\n"
+                    f"📅 *{existing_start}* - *{existing_end}* (*{existing_leave_type}*)\n\n"
                     "🔄 *Please select a different START DATE.*",
                     parse_mode="Markdown"
                 )
@@ -360,16 +335,7 @@ async def show_end_date_selection(update: Update, context: ContextTypes.DEFAULT_
         buttons.append(row)
 
     reply_markup = InlineKeyboardMarkup(buttons)
-    # await query.message.reply_text(
-    #     "📆 **Select the END DATE for your leave:**",
-    #     reply_markup=reply_markup,
-    #     parse_mode="Markdown"
-    # )
-    # await query.message.reply_text(
-    #     "📆 Select the <b>END DATE</b> for your leave:",
-    #     reply_markup=reply_markup,
-    #     parse_mode="HTML"
-    # )
+
     leave_type = context.user_data.get("leave_type", "Leave")  # Default to "Leave" if not specified
 
     # Customize text based on leave type
@@ -442,7 +408,7 @@ async def end_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 logger.warning(f"User {user_id} attempted overlapping leave: {start_date} - {selected_end_date}")
                 await query.message.reply_text(
                     f"⚠️ The selected leave period *overlaps* with an existing leave:\n"
-                    f"📅 {existing_start} - {existing_end} ({existing_leave_type})\n\n"
+                    f"📅 *{existing_start}* - *{existing_end}* (*{existing_leave_type}*)\n\n"
                     "🔄 *Please reselect the START and END dates.*",
                     parse_mode="Markdown"
                 )
@@ -455,16 +421,9 @@ async def end_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             (start_date_obj.strftime("%d-%B"), end_date_obj.strftime("%d-%B"), leave_type))
         logger.info(f"Stored leave for {user_id}: {start_date} to {selected_end_date} ({leave_type})")
 
-        # buttons = [
-        #     [InlineKeyboardButton("📝 Yes, Add More Leaves", callback_data="apply_leave")],
-        #     [InlineKeyboardButton("📊 No, Generate Timesheet", callback_data="generate_timesheet_after_leave")]
-        # ]
-        # reply_markup = InlineKeyboardMarkup(buttons)
-        # await query.message.reply_text("Do you want to add more leaves?", reply_markup=reply_markup)
-
         buttons = [
             [InlineKeyboardButton("📝 Yes, Add More Leaves", callback_data="apply_leave")],
-            [InlineKeyboardButton("🔧 Add Weekends Efforts / Half Day Efforts / NS Leave", callback_data="special_efforts")],  # ✅ NEW OPTION ADDED
+            [InlineKeyboardButton("🔧 Add NS Leave / Weekends Efforts / Half Day Efforts", callback_data="special_efforts")],
             [InlineKeyboardButton("📊 No, Generate Timesheet", callback_data="generate_timesheet_after_leave")]
         ]
         reply_markup = InlineKeyboardMarkup(buttons)
@@ -480,7 +439,6 @@ async def end_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # Handle Generate Timesheet
-
 async def generate_timesheet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -488,23 +446,45 @@ async def generate_timesheet(update: Update, context: ContextTypes.DEFAULT_TYPE)
     user_id = str(update.effective_user.id).strip()
     month = context.user_data.get("month")
 
+    logger.info(f"📌 Processing timesheet generation for User ID: {user_id}")
+
     if not month:
+        logger.warning(f"⚠️ User {user_id} attempted to generate timesheet without selecting a month.")
         await query.message.reply_text("You must first select a month.")
         return
+
+    logger.info(f"Selected month: {month}")
 
     # Reset button expectation since we are now processing the timesheet
     context.user_data.pop("waiting_for_button", None)
 
-    # Ensure user details exist
-    USER_DETAILS = load_user_details()
-    user_details = USER_DETAILS.get(user_id, {})
+    # Load user details
+    try:
+        USER_DETAILS = load_user_details()
+        user_details = USER_DETAILS.get(user_id, {})
+
+        logger.debug(f"Loaded user details: {user_details}")
+
+        if not user_details:
+            logger.error(f"❌ User {user_id} not found in user details!")
+            await query.message.reply_text(f"⚠️ User details not found. Please register again using /register.")
+            return
+
+    except Exception as e:
+        logger.error(f"🔥 Error loading user details for {user_id}: {e}")
+        logger.error(traceback.format_exc())  # Capture full stack trace
+        await query.message.reply_text("⚠️ Internal error loading user details. Try again later.")
+        return
 
     # Required fields for generating a timesheet
-    required_keys = {"name", "timesheet_preference", "skill_level", "role_specialization", "group_specialization", "contractor"}
-    missing_keys = required_keys - user_details.keys()
+    required_keys = {
+        "name", "timesheet_preference", "skill_level",
+        "role_specialization", "group_specialization", "contractor"
+    }
 
+    missing_keys = required_keys - user_details.keys()
     if missing_keys:
-        logger.warning(f"User ID {user_id} is missing required keys: {missing_keys}")
+        logger.warning(f"⚠️ User ID {user_id} is missing required keys: {missing_keys}")
         await query.message.reply_text(
             "⚠️ *It looks like your registration is incomplete.*\n\n"
             "Please complete your registration to generate a timesheet.\n"
@@ -513,7 +493,27 @@ async def generate_timesheet(update: Update, context: ContextTypes.DEFAULT_TYPE)
         )
         return
 
-    # RATE LIMITING LOGIC
+    # Validate field types to prevent errors
+    try:
+        name = str(user_details.get("name", "Unknown"))
+        timesheet_preference = float(user_details.get("timesheet_preference", 1.0))
+
+
+        skill_level = str(user_details.get("skill_level", "Unknown"))
+        role_specialization = str(user_details.get("role_specialization", "Unknown"))
+        group_specialization = str(user_details.get("group_specialization", "Unknown"))
+        contractor = str(user_details.get("contractor", "Unknown"))
+
+        logger.info(
+            f"User Data Validated: {name}, {timesheet_preference}, {skill_level}, {role_specialization}, {group_specialization}, {contractor}")
+
+    except ValueError as ve:
+        logger.error(f"❌ Type error in user details for {user_id}: {ve}")
+        logger.error(traceback.format_exc())
+        await query.message.reply_text("⚠️ Internal data error. Please contact support.")
+        return
+
+    # Rate Limiting Logic
     now = time.time()
     rate_limits.setdefault(user_id, deque())
 
@@ -523,6 +523,7 @@ async def generate_timesheet(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     # Check if the user exceeded the limit
     if len(rate_limits[user_id]) >= MAX_ATTEMPTS:
+        logger.warning(f"⚠️ Rate limit exceeded for user {user_id}. Blocking further attempts temporarily.")
         await query.message.reply_text(
             "⚠️ *Attempt threshold reached!*\n\n"
             "You have reached the maximum allowed attempts within a short period. "
@@ -542,8 +543,8 @@ async def generate_timesheet(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     # Start processing the queue if it's the first task
     if user_task_queues[user_id].qsize() == 1:
+        logger.info(f"Initiating processing queue for user {user_id}.")
         asyncio.create_task(process_queue(user_id))
-
 
 async def process_queue(user_id):
     while not user_task_queues[user_id].empty():
@@ -555,7 +556,7 @@ async def process_queue(user_id):
                 await query.message.reply_text("You must first select a month.")
                 continue
 
-            logger.info(f"📝 Generating timesheet for user {user_id} for month: {month}")
+            logger.info(f"Generating timesheet for user {user_id} for month: {month}")
 
             month_number = datetime.strptime(month, "%B").month
             year = datetime.now().year
@@ -564,14 +565,39 @@ async def process_queue(user_id):
             user_leaves.setdefault(user_id, {}).setdefault(month, [])
 
             leave_data = user_leaves[user_id][month]
-            logger.info(f"Raw leave_data for user {user_id}: {leave_data}")
-
+            logger.info(f"Raw leave_data for user {user_id}: {leave_data} (Type: {type(leave_data)})")
             parsed_leave_data = []
-            for leave_entry in leave_data:
+
+            # 🚨 Debugging: Check if leave_data contains unexpected types
+            for idx, leave_entry in enumerate(leave_data):
+                logger.debug(f"Checking leave entry at index {idx}: {leave_entry} (Type: {type(leave_entry)})")
+
+                # Ensure each leave entry is a tuple of length 3
                 if not isinstance(leave_entry, tuple) or len(leave_entry) != 3:
-                    raise ValueError(f"Invalid leave entry format: {leave_entry}")
+                    logger.error(
+                        f"❌ Invalid leave entry format at index {idx}: {leave_entry} (Type: {type(leave_entry)})")
+                    raise ValueError(f"Invalid leave entry format at index {idx}: {leave_entry}")
 
                 start_date_str, end_date_str, leave_type = leave_entry
+
+                # 🚨 Log and Check Each Element Type
+                logger.debug(f"start_date_str: {start_date_str} (Type: {type(start_date_str)})")
+                logger.debug(f"end_date_str: {end_date_str} (Type: {type(end_date_str)})")
+                logger.debug(f"leave_type: {leave_type} (Type: {type(leave_type)})")
+
+                # 🚨 If any value is a float, log an error
+                if isinstance(start_date_str, float):
+                    logger.error(f"❌ start_date_str is a float! Converting to string: {start_date_str}")
+                if isinstance(end_date_str, float):
+                    logger.error(f"❌ end_date_str is a float! Converting to string: {end_date_str}")
+                if isinstance(leave_type, float):
+                    logger.error(f"❌ leave_type is a float! Converting to string: {leave_type}")
+
+                # Ensure all elements are strings before stripping
+                start_date_str = str(start_date_str).strip()
+                end_date_str = str(end_date_str).strip()
+                leave_type = str(leave_type).strip()
+
                 start_date_obj = datetime.strptime(start_date_str, "%d-%B").replace(year=year)
                 end_date_obj = datetime.strptime(end_date_str, "%d-%B").replace(year=year)
 
@@ -668,8 +694,6 @@ def main():
     application.add_handler(CommandHandler("register", register_new_user))
 
     # # Add MessageHandler to capture user input during registration
-    # application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, capture_user_details))
-    # application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_unexpected_text))
     # Register a **single** message handler that decides the flow
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_input))
 
