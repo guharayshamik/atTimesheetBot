@@ -446,7 +446,7 @@ async def generate_timesheet(update: Update, context: ContextTypes.DEFAULT_TYPE)
     user_id = str(update.effective_user.id).strip()
     month = context.user_data.get("month")
 
-    logger.info(f"📌 Processing timesheet generation for User ID: {user_id}")
+    logger.info(f"Processing timesheet generation for User ID: {user_id}")
 
     if not month:
         logger.warning(f"⚠️ User {user_id} attempted to generate timesheet without selecting a month.")

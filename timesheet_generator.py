@@ -471,20 +471,39 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     total_cell.border = thin_border
 
     # Apply Borders and Fix Number Format for Total Row (Columns C to H)
-    for col_num, key in enumerate(totals.keys(), 3):  # Starts from column C (At Work) to H (Remarks)
+    # for col_num, key in enumerate(totals.keys(), 3):  # Starts from column C (At Work) to H (Remarks)
+    #     total_value = totals[key]
+    #     display_total = "-" if total_value == 0.0 else total_value  # Keep numbers as numbers
+    #     cell = ws.cell(row=current_row, column=col_num, value=display_total)
+    #     # Ensure total values remain **normal** (not bold)
+    #     cell.font = Font(name="Arial", size=12, bold=False, color="000000")
+    #     cell.alignment = right_alignment  # Apply right alignment
+    #     cell.border = thin_border  # Apply border to each cell
+    #     cell.number_format = "0.0"  # Ensure it's stored as a number (1 decimal place)
+    #
+    # # Apply Border to Columns A, B, and H (to maintain consistency)
+    # ws[f"A{current_row}"].border = thin_border
+    # ws[f"B{current_row}"].border = thin_border
+    # ws[f"H{current_row}"].border = thin_border
+    # Determine column indexes dynamically
+    remarks_column = 9 if ns_leave_present else 8  # "I" if NS Leave exists, else "H"
+    ns_leave_column = 8 if ns_leave_present else None  # "H" if NS Leave exists, else None
+
+    for col_num, key in enumerate(totals.keys(), 3):  # Starts from column C (At Work)
         total_value = totals[key]
         display_total = "-" if total_value == 0.0 else total_value  # Keep numbers as numbers
         cell = ws.cell(row=current_row, column=col_num, value=display_total)
+
         # Ensure total values remain **normal** (not bold)
         cell.font = Font(name="Arial", size=12, bold=False, color="000000")
         cell.alignment = right_alignment  # Apply right alignment
         cell.border = thin_border  # Apply border to each cell
         cell.number_format = "0.0"  # Ensure it's stored as a number (1 decimal place)
 
-    # Apply Border to Columns A, B, and H (to maintain consistency)
+    # Apply border to the Remarks column dynamically
     ws[f"A{current_row}"].border = thin_border
     ws[f"B{current_row}"].border = thin_border
-    ws[f"H{current_row}"].border = thin_border
+    ws[f"{chr(64 + remarks_column)}{current_row}"].border = thin_border  # Apply border dynamically based on Remarks column
 
     # **Signature Section**
     current_date = datetime.now().strftime("%d - %b - %Y")  # Ensure proper formatting before writing to Excel
