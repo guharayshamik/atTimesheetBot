@@ -112,11 +112,18 @@ async def month_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["waiting_for_button"] = True  # Expect button input next
 
     logger.info(f"User {update.effective_user.id} selected month: {selected_month}")
+    #
+    # buttons = [
+    #     [InlineKeyboardButton("📝 Apply Leave", callback_data="apply_leave")],
+    #     [InlineKeyboardButton("📊 Generate Timesheet Without Leave", callback_data="generate_timesheet_now")]
+    # ]
 
     buttons = [
         [InlineKeyboardButton("📝 Apply Leave", callback_data="apply_leave")],
+        [InlineKeyboardButton("🔧 Add Weekends Efforts / Half Day Efforts / NS Leave", callback_data="special_efforts")],
         [InlineKeyboardButton("📊 Generate Timesheet Without Leave", callback_data="generate_timesheet_now")]
     ]
+
     reply_markup = InlineKeyboardMarkup(buttons)
 
     # await query.message.reply_text(
@@ -132,6 +139,59 @@ async def month_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="HTML"
     )
 
+
+# Handle Special Efforts Selection
+async def special_efforts_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    buttons = [
+        [InlineKeyboardButton("Add NS Leaves", callback_data="ns_leave")],
+        [InlineKeyboardButton("Add Weekend Efforts", callback_data="weekend_efforts")],
+        [InlineKeyboardButton("Update Half Day", callback_data="half_day")]
+    ]
+    reply_markup = InlineKeyboardMarkup(buttons)
+
+    await query.message.reply_text(
+        "🗓 Okay, which action do you want to perform?",
+        reply_markup=reply_markup
+    )
+
+
+# Reuse existing start and end date handlers for new actions
+async def ns_leave_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data["leave_type"] = "NS Leave"
+    await show_start_date_selection(update, context)
+
+
+async def weekend_efforts_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data["leave_type"] = "Weekend Efforts"
+    await show_start_date_selection(update, context)
+
+
+async def half_day_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data["leave_type"] = "Half Day"
+    await show_start_date_selection(update, context)
+
+
+# Handle Action Completion and Ask for More Actions
+async def action_completed(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    buttons = [
+        [InlineKeyboardButton("Add NS Leaves", callback_data="ns_leave")],
+        [InlineKeyboardButton("Add Weekend Efforts", callback_data="weekend_efforts")],
+        [InlineKeyboardButton("Update Half Day", callback_data="half_day")],
+        [InlineKeyboardButton("📝 Apply Leave", callback_data="apply_leave")],
+        [InlineKeyboardButton("📊 Generate Timesheet", callback_data="generate_timesheet_after_leave")]
+    ]
+    reply_markup = InlineKeyboardMarkup(buttons)
+
+    await query.message.reply_text(
+        "🔄 Do you need to add any more actions or proceed with the timesheet?",
+        reply_markup=reply_markup
+    )
 
 # Handle Apply Leave
 async def apply_leave(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -204,8 +264,16 @@ async def show_start_date_selection(update: Update, context: ContextTypes.DEFAUL
     #     reply_markup=reply_markup,
     #     parse_mode="Markdown"
     # )
+    leave_type = context.user_data.get("leave_type", "Leave")  # Default to "Leave" if not specified
+
+    # Customize text based on leave type
+    if leave_type in ["NS Leave", "Weekend Efforts", "Public Holiday Efforts", "Half Day Efforts"]:
+        message_text = f"📆 Select the <b>START DATE</b> for your <b>{leave_type}</b>:"
+    else:
+        message_text = f"📆 Select the <b>START DATE</b> for your <b>{leave_type}</b>:"
+
     await query.message.reply_text(
-        "📆 Select the <b>START DATE</b> for your leave:",
+        message_text,
         reply_markup=reply_markup,
         parse_mode="HTML"
     )
@@ -297,8 +365,21 @@ async def show_end_date_selection(update: Update, context: ContextTypes.DEFAULT_
     #     reply_markup=reply_markup,
     #     parse_mode="Markdown"
     # )
+    # await query.message.reply_text(
+    #     "📆 Select the <b>END DATE</b> for your leave:",
+    #     reply_markup=reply_markup,
+    #     parse_mode="HTML"
+    # )
+    leave_type = context.user_data.get("leave_type", "Leave")  # Default to "Leave" if not specified
+
+    # Customize text based on leave type
+    if leave_type in ["NS Leave", "Weekend Efforts", "Public Holiday Efforts", "Half Day Efforts"]:
+        message_text = f"📆 Select the <b>END DATE</b> for your <b>{leave_type}</b>:"
+    else:
+        message_text = f"📆 Select the <b>END DATE</b> for your <b>{leave_type}</b>:"
+
     await query.message.reply_text(
-        "📆 Select the <b>END DATE</b> for your leave:",
+        message_text,
         reply_markup=reply_markup,
         parse_mode="HTML"
     )
@@ -374,12 +455,24 @@ async def end_date_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             (start_date_obj.strftime("%d-%B"), end_date_obj.strftime("%d-%B"), leave_type))
         logger.info(f"Stored leave for {user_id}: {start_date} to {selected_end_date} ({leave_type})")
 
+        # buttons = [
+        #     [InlineKeyboardButton("📝 Yes, Add More Leaves", callback_data="apply_leave")],
+        #     [InlineKeyboardButton("📊 No, Generate Timesheet", callback_data="generate_timesheet_after_leave")]
+        # ]
+        # reply_markup = InlineKeyboardMarkup(buttons)
+        # await query.message.reply_text("Do you want to add more leaves?", reply_markup=reply_markup)
+
         buttons = [
             [InlineKeyboardButton("📝 Yes, Add More Leaves", callback_data="apply_leave")],
+            [InlineKeyboardButton("🔧 Add Weekends Efforts / Half Day Efforts / NS Leave", callback_data="special_efforts")],  # ✅ NEW OPTION ADDED
             [InlineKeyboardButton("📊 No, Generate Timesheet", callback_data="generate_timesheet_after_leave")]
         ]
         reply_markup = InlineKeyboardMarkup(buttons)
-        await query.message.reply_text("Do you want to add more leaves?", reply_markup=reply_markup)
+
+        await query.message.reply_text(
+            "Do you want to add more leaves or include special efforts?",
+            reply_markup=reply_markup
+        )
 
     except ValueError as e:
         logger.error(f"Invalid date format received: {e}")
@@ -586,6 +679,13 @@ def main():
 
     application.add_handler(CallbackQueryHandler(month_handler, pattern="^month_"))
     application.add_handler(CallbackQueryHandler(apply_leave, pattern="^apply_leave$"))
+    # Register New Handlers in main()
+    application.add_handler(CallbackQueryHandler(special_efforts_handler, pattern="^special_efforts$"))
+    application.add_handler(CallbackQueryHandler(ns_leave_handler, pattern="^ns_leave$"))
+    application.add_handler(CallbackQueryHandler(weekend_efforts_handler, pattern="^weekend_efforts$"))
+    application.add_handler(CallbackQueryHandler(half_day_handler, pattern="^half_day$"))
+    application.add_handler(CallbackQueryHandler(action_completed, pattern="^(ns_leave_|weekend_efforts_|half_day_)"))
+
     application.add_handler(CallbackQueryHandler(leave_type_handler, pattern="^leave_"))
     application.add_handler(CallbackQueryHandler(start_date_handler, pattern="^start_date_"))
     application.add_handler(CallbackQueryHandler(end_date_handler, pattern="^end_date_"))

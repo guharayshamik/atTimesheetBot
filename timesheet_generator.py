@@ -1,5 +1,5 @@
 from openpyxl import Workbook
-from openpyxl.styles import Alignment, PatternFill, Font, Border, Side
+from openpyxl.styles import Alignment, Font, PatternFill, Border
 from datetime import datetime, timedelta
 from calendar import monthrange
 import os
@@ -8,23 +8,14 @@ from styles import (  # Import styles from styles.py
     thin_border, white_fill, yellow_fill, light_green_fill, lighter_green_fill, light_yellow_fill, light_blue_fill,
     light_red_fill, bold_font, red_font, black_font, center_alignment, right_alignment)
 
+
+
 def generate_timesheet_excel(user_id, month, year, leave_details):
-    print(f"Generating timesheet for User ID: {user_id}, Month: {month}, Year: {year}")
-
-    # Fetch Latest User Details
-    USER_DETAILS = load_user_details()  # Ensures it fetches the latest data
-
-    # Debug: Print Public Holidays for Verification
-    print("Public Holidays Loaded:", PUBLIC_HOLIDAYS)
-    print("User details Loaded:", USER_DETAILS)
-
-    # Fetch User Details
+    USER_DETAILS = load_user_details()
     user_details = USER_DETAILS.get(user_id)
     if not user_details:
-        print(f"Error: User with ID {user_id} not found.")
         raise ValueError(f"User with ID {user_id} not found.")
 
-    # Extract user details
     name = user_details["name"]
     skill_level = user_details["skill_level"]
     role_specialization = user_details["role_specialization"]
@@ -34,9 +25,8 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     po_date = user_details["po_date"]
     description = user_details["description"]
     reporting_officer = user_details["reporting_officer"]
-
     # ✅ Fetch timesheet preference (Default to 1.0 if not set)
-    timesheet_preference = float(user_details.get("timesheet_preference", 1.0))  # Convert to float
+    timesheet_preference = float(user_details.get("timesheet_preference", 1.0))
 
     # File Setup
     month_name = datetime(year, month, 1).strftime("%B")
@@ -49,6 +39,7 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     wb = Workbook()
     ws = wb.active
     ws.title = f"{month_name} {year} Timesheet"
+
 
     ws.merge_cells("B2:D2")
 
@@ -89,9 +80,8 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
 
     # Apply Yellow Fill to Values Only (B-D, G-H)
     for row in range(2, 5):
-         for col in ["B", "C", "D"]:
-             ws[f"{col}{row}"].fill = yellow_fill  # Apply to Description, PO Ref, PO Date
-
+        for col in ["B", "C", "D"]:
+            ws[f"{col}{row}"].fill = yellow_fill  # Apply to Description, PO Ref, PO Date
 
     # Apply Yellow Fill ONLY to Month/Year (G2:H2)
     for col in ["G", "H"]:
@@ -169,15 +159,14 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     headers = ["SN", "Date", "At Work", "Public Holiday", "Sick Leave", "Childcare Leave", "Annual Leave", "Remarks"]
     header_fills = [white_fill, white_fill, light_green_fill, light_yellow_fill, lighter_green_fill, white_fill,
                     light_blue_fill, white_fill]  # Corresponding fill colors
-
     for col_num, (header, fill) in enumerate(zip(headers, header_fills), 1):
         cell = ws.cell(row=10, column=col_num, value=header)
 
-        # Apply the same font and styling to ALL headers, including "Remarks"
-        cell.font = Font(name="Arial", size=12, bold=True, color="000000")  # Bold Arial 12, black text
-        cell.alignment = Alignment(horizontal="center", vertical="center")  # Center alignment
-        cell.border = thin_border  # Apply thin border
-        cell.fill = fill  # Apply the respective color
+    # Apply the same font and styling to ALL headers, including "Remarks"
+    cell.font = Font(name="Arial", size=12, bold=True, color="000000")  # Bold Arial 12, black text
+    cell.alignment = Alignment(horizontal="center", vertical="center")  # Center alignment
+    cell.border = thin_border  # Apply thin border
+    cell.fill = fill  # Apply the respective color
 
     # Ensure "Remarks" header (Column 8) is formatted the same way
     ws["H10"].font = Font(name="Arial", size=12, bold=False, color="000000")  # Match font
@@ -208,72 +197,77 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
         weekday = date_obj.weekday()
 
         # ✅ Set "At Work" value dynamically based on timesheet preference
-        at_work = timesheet_preference if weekday not in [5, 6] else 0.0  # Default to user preference, except weekends
-        public_holiday, sick_leave, childcare_leave, annual_leave = 0.0, 0.0, 0.0, 0.0
+        at_work = timesheet_preference if weekday not in [5, 6] else 0.0
+        public_holiday, sick_leave, childcare_leave, annual_leave = 0.0, 0.0, 0.0, 0.0  # Default to user preference, except weekends
         remark = "-"  # Default empty remark
-
         # **Handle Weekends**
         if weekday == 5:
             at_work = 0.0
             remark = "Saturday"
-        elif weekday == 6:
-            at_work = 0.0
-            remark = "Sunday"
 
-        # **Handle Public Holidays (Fixed)**
+        if weekday in [5, 6]:
+            at_work = 0.0
+            remark = "Weekend"
+
         if public_holiday_check in PUBLIC_HOLIDAYS:
-            print(f"📌 Public Holiday Found: {public_holiday_check} - {PUBLIC_HOLIDAYS[public_holiday_check]}")
             at_work = 0.0
             public_holiday = 1.0
-            remark = PUBLIC_HOLIDAYS[public_holiday_check]  # Now shows "New Year's Day", "Labor Day", etc.
+            remark = PUBLIC_HOLIDAYS[public_holiday_check]
 
-        # **Handle User Leaves**
         for leave_date, leave_type in expanded_leave_details:
-            if leave_date == date_obj.strftime("%Y-%m-%d"):  # Correct comparison
-                if public_holiday == 0.0 and weekday not in [5, 6]:
-                    at_work = 0.0  # Ensure work is set to 0.0
-                    if leave_type == "Sick Leave" : #and leave_date != public_holiday_check:
+            if leave_date == date_obj.strftime("%Y-%m-%d"):
+                if leave_type == "Sick Leave":
+                    # ✅ Sick Leave should NOT apply on weekends or public holidays
+                    if weekday not in [5, 6] and public_holiday_check not in PUBLIC_HOLIDAYS:
                         sick_leave = 1.0
-                    elif leave_type == "Childcare Leave": # and leave_date != public_holiday_check:
+                        at_work = 0.0
+                elif leave_type == "Childcare Leave":
+                    # ✅ Childcare Leave should NOT apply on weekends or public holidays
+                    if weekday not in [5, 6] and public_holiday_check not in PUBLIC_HOLIDAYS:
                         childcare_leave = 1.0
-                    elif leave_type == "Annual Leave" : #and leave_date != public_holiday_check:
+                        at_work = 0.0
+                elif leave_type == "Annual Leave":
+                    # ✅ Annual Leave should NOT apply on weekends or public holidays
+                    if weekday not in [5, 6] and public_holiday_check not in PUBLIC_HOLIDAYS:
                         annual_leave = 1.0
-                #remark = leave_type  # DONT NEED TO Display leave type in the remarks column
+                        at_work = 0.0
+                elif leave_type == "Weekend Efforts":
+                    # ✅ Only update at_work if it's a Saturday, Sunday, or Public Holiday
+                    if weekday in [5, 6] or public_holiday_check in PUBLIC_HOLIDAYS:
+                        at_work = 8.0 if timesheet_preference == 8.5 else 1.0
+                elif leave_type == "Public Holiday Efforts":
+                    # ✅ Only update at_work if it's a Public Holiday
+                    if public_holiday_check in PUBLIC_HOLIDAYS:
+                        at_work = 8.0 if timesheet_preference == 8.5 else 1.0
+                elif leave_type == "Half Day":
+                    at_work = 4.5 if timesheet_preference == 8.5 else 0.5
 
-        # **Update Totals**
-        totals["At Work"] += at_work
+        totals["At Work"] += at_work if isinstance(at_work, float) else 0.0
         totals["Public Holiday"] += public_holiday
         totals["Sick Leave"] += sick_leave
         totals["Childcare Leave"] += childcare_leave
         totals["Annual Leave"] += annual_leave
 
-        # **Ensure "-" for Empty Cells**
-        public_holiday_display = "-" if public_holiday == 0.0 else f"{public_holiday:.1f}"
-        remark_display = remark if remark else "-"
-
-        # Convert numeric values explicitly to float to avoid Excel warnings
         row_data = [
-            current_row - 10,
+            current_row - 1,
             formatted_date,
-            at_work if at_work != 0.0 else "",  # Keep as float
-            public_holiday if public_holiday != 0.0 else "-",  # Keep as float
-            sick_leave if sick_leave != 0.0 else "",  # Keep as float
-            childcare_leave if childcare_leave != 0.0 else "",  # Keep as float
-            annual_leave if annual_leave != 0.0 else "",  # Keep as float
-            remark_display
+            at_work if at_work != 0.0 else "",
+            public_holiday if public_holiday != 0.0 else "-",
+            sick_leave if sick_leave != 0.0 else "",
+            childcare_leave if childcare_leave != 0.0 else "",
+            annual_leave if annual_leave != 0.0 else "",
+            remark
         ]
 
         for col_num, value in enumerate(row_data, 1):
             cell = ws.cell(row=current_row, column=col_num, value=value)
             cell.alignment = center_alignment
             cell.border = thin_border
-
             # Highlight Leave & Public Holiday Cells
             if col_num in [3, 4, 5, 6, 7]:  # At Work, Public Holiday, Sick Leave, Childcare Leave, Annual Leave
                 cell.fill = yellow_fill if value not in ["", "-"] else white_fill
-
             # Highlight Remarks for Public Holidays & Leaves | remove redudant  code
-            if col_num == 8 and remark_display not in ["-", ""]:
+            if col_num == 8 and remark not in ["-", ""]:
                 cell.fill = light_red_fill
             #   cell.font = bold_font
 
@@ -300,9 +294,9 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
         # Apply right aligned for At Work, Public Holiday, Sick Leave, Childcare Leave, and Annual Leave up to row 31
         for row in range(11, 11 + days_in_month):  # Assuming row 11 is the first data row, row 41 is the last (31st day)
             for col_num in [3, 4, 5, 6,
-                                7]:  # Columns: At Work (C), Sick Leave (E), Childcare Leave (F), Annual Leave (G)
-                    cell = ws.cell(row=row, column=col_num)
-                    cell.alignment = right_alignment
+                            7]:  # Columns: At Work (C), Sick Leave (E), Childcare Leave (F), Annual Leave (G)
+                cell = ws.cell(row=row, column=col_num)
+                cell.alignment = right_alignment
 
         for row in range(11, 53):  # Adjusting for row range from 11 to 42 (inclusive)
             cell = ws.cell(row=row, column=8)  # Column 8 is "Remarks"
@@ -316,7 +310,7 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
         current_row += 1
 
     current_row += 2
-    #fixing error text
+    # fixing error text
     # Apply "Total" Label
     # ws[f"A{current_row}"] = "Total"
     # ws[f"A{current_row}"].font = Font(name="Arial", size=12, bold=True, color="000000")  # Only "Total" is bold
@@ -332,9 +326,7 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     for col_num, key in enumerate(totals.keys(), 3):  # Starts from column C (At Work) to H (Remarks)
         total_value = totals[key]
         display_total = "-" if total_value == 0.0 else total_value  # Keep numbers as numbers
-
         cell = ws.cell(row=current_row, column=col_num, value=display_total)
-
         # Ensure total values remain **normal** (not bold)
         cell.font = Font(name="Arial", size=12, bold=False, color="000000")
         cell.alignment = right_alignment  # Apply right alignment
@@ -345,8 +337,6 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     ws[f"A{current_row}"].border = thin_border
     ws[f"B{current_row}"].border = thin_border
     ws[f"H{current_row}"].border = thin_border
-
-
 
     # **Signature Section**
     current_date = datetime.now().strftime("%d - %b - %Y")  # Ensure proper formatting before writing to Excel
@@ -393,7 +383,7 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
 
     for row in ws.iter_rows(min_row=1, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
         for cell in row:
-            if cell.column != 8 and cell.row != current_row:   # Exclude "Total" row from being overwritten AND Skip column 8 to retain red font for public holidays
+            if cell.column != 8 and cell.row != current_row:  # Exclude "Total" row from being overwritten AND Skip column 8 to retain red font for public holidays
                 cell.font = arial_font  # Apply Arial 12 font
 
     # Now, Ensure Remarks Column (Column 8) Uses Arial 12 But Keeps Public Holidays Red
@@ -438,7 +428,6 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     ws.column_dimensions["H"].width = max(
         len(str(cell.value)) for row in ws.iter_rows(min_row=11, max_row=11 + days_in_month, min_col=1, max_col=8) for
         cell in row) + 2
-
 
     # **Save File**
     wb.save(output_file)
