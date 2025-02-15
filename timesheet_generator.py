@@ -168,7 +168,8 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     # **Table Headers**
     headers = ["SN", "Date", "At Work", "Public Holiday", "Sick Leave", "Childcare Leave", "Annual Leave"]
     if ns_leave_present:
-        headers.append("NS Leave")  # Add NS Leave column only if applicable
+        #headers.append("NS Leave")  # Add NS Leave column only if applicable
+        headers.append("National Service Leave")  # Rename "NS Leave" if required
     headers.append("Remarks")  # Add Remarks at the end
 
     header_fills = [
@@ -247,7 +248,8 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     _, days_in_month = monthrange(year, month)
     totals = {"At Work": 0.0, "Public Holiday": 0.0, "Sick Leave": 0.0, "Childcare Leave": 0.0, "Annual Leave": 0.0}
     if ns_leave_present:
-        totals["NS Leave"] = 0.0  # Initialize NS Leave Total
+        #totals["NS Leave"] = 0.0  # Initialize NS Leave Total
+        totals["National Service Leave"] = 0.0  # Rename "NS Leave" to "National Service Leave"
 
     for day in range(1, days_in_month + 1):
         date_obj = datetime(year, month, day)
@@ -323,7 +325,8 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
         totals["Childcare Leave"] += childcare_leave
         totals["Annual Leave"] += annual_leave
         if ns_leave_present:
-            totals["NS Leave"] += ns_leave
+            #totals["NS Leave"] += ns_leave
+            totals["National Service Leave"] += ns_leave  # Change "NS Leave" to "National Service Leave"
 
         # row_data = [current_row - 1, formatted_date, at_work, public_holiday, sick_leave, childcare_leave, annual_leave]
         # if ns_leave_present:
@@ -471,20 +474,6 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
     total_cell.border = thin_border
 
     # Apply Borders and Fix Number Format for Total Row (Columns C to H)
-    # for col_num, key in enumerate(totals.keys(), 3):  # Starts from column C (At Work) to H (Remarks)
-    #     total_value = totals[key]
-    #     display_total = "-" if total_value == 0.0 else total_value  # Keep numbers as numbers
-    #     cell = ws.cell(row=current_row, column=col_num, value=display_total)
-    #     # Ensure total values remain **normal** (not bold)
-    #     cell.font = Font(name="Arial", size=12, bold=False, color="000000")
-    #     cell.alignment = right_alignment  # Apply right alignment
-    #     cell.border = thin_border  # Apply border to each cell
-    #     cell.number_format = "0.0"  # Ensure it's stored as a number (1 decimal place)
-    #
-    # # Apply Border to Columns A, B, and H (to maintain consistency)
-    # ws[f"A{current_row}"].border = thin_border
-    # ws[f"B{current_row}"].border = thin_border
-    # ws[f"H{current_row}"].border = thin_border
     # Determine column indexes dynamically
     remarks_column = 9 if ns_leave_present else 8  # "I" if NS Leave exists, else "H"
     ns_leave_column = 8 if ns_leave_present else None  # "H" if NS Leave exists, else None
@@ -556,30 +545,6 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
             if cell.column != remarks_column_index and cell.row != current_row:
                 cell.font = arial_font  # Apply Arial 12 font
 
-    # Now, Ensure Remarks Column (Column 8) Uses Arial 12 But Keeps Public Holidays Red
-    # for row in range(11, 11 + days_in_month):
-    #     cell = ws.cell(row=row, column=8)  # Remarks column
-    #     date_cell = ws.cell(row=row, column=2)  # Date column to determine the weekday
-    #
-    #     if date_cell.value:
-    #         try:
-    #             date_obj = datetime.strptime(date_cell.value, "%d-%B-%Y")  # Convert date to object
-    #             weekday = date_obj.weekday()  # Get weekday (0 = Monday, 6 = Sunday)
-    #         except ValueError:
-    #             weekday = None  # In case date format is incorrect
-    #
-    #     if cell.value and cell.value not in ["-", ""]:  # Apply styles only to meaningful values
-    #         #cell_value = cell.value.strip().lower()
-    #         cell_value = str(cell.value).strip().lower()
-    #
-    #         # Check if the remark is a public holiday or weekend (Saturday/Sunday)
-    #         if any(holiday.lower() in cell_value for holiday in PUBLIC_HOLIDAYS.values()) or weekday in [5, 6]:
-    #             cell.font = Font(name="Arial", size=12, color="FF0000",
-    #                              bold=False)  # Keep red font for public holidays & weekends
-    #         else:
-    #             cell.font = Font(name="Arial", size=12, color="000000", bold=False)  # Apply Arial 12 for other remarks
-    #     else:  # If the value is "-", keep it black and in Arial
-    #         cell.font = Font(name="Arial", size=12, color="000000", bold=False)
     # Determine Remarks column index based on NS Leave presence
     remarks_column = 9 if ns_leave_present else 8
 
