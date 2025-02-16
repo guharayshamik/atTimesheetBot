@@ -341,7 +341,8 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
             sn_counter,  # Now SN starts at 1, 2, 3...
             formatted_date,
             "" if at_work == 0.0 else at_work,
-            "" if public_holiday == 0.0 else public_holiday,
+          #  "" if public_holiday == 0.0 else public_holiday,
+            "-" if public_holiday == 0.0 else public_holiday,
             "" if sick_leave == 0.0 else sick_leave,
             "" if childcare_leave == 0.0 else childcare_leave,
             "" if annual_leave == 0.0 else annual_leave,
