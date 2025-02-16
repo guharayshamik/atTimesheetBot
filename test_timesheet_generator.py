@@ -46,6 +46,25 @@ MOCK_LEAVE_DETAILS_SEPTEMBER = [
     ("27-September", "27-September", "Childcare Leave")  # Sep 27th
 ]
 
+MOCK_LEAVE_DETAILS_DECEMBER = [
+    ("05-December", "05-December", "Half Day"),  # Half-day leave on Dec 5th
+    ("10-December", "10-December", "Weekend Efforts"),  # Weekend effort on Dec 10th (Assuming Sunday)
+    ("15-December", "15-December", "NS Leave"),  # NS Leave on Dec 15th
+    ("20-December", "22-December", "Annual Leave"),  # Annual Leave from Dec 20 to Dec 22
+    ("25-December", "25-December", "Public Holiday"),  # Public Holiday on Dec 25 (Christmas)
+    ("31-December", "31-December", "Weekend Efforts"),  # Weekend effort on Dec 31st (Sunday)
+]
+
+MOCK_LEAVE_DETAILS_OCTOBER = [
+    ("04-October", "04-October", "Half Day"),  # Half-day leave on Oct 4th
+    ("08-October", "08-October", "Weekend Efforts"),  # Weekend effort on Oct 8th (Sunday)
+    ("12-October", "12-October", "Annual Leave"),  # Annual Leave on Oct 12th
+    ("18-October", "20-October", "Sick Leave"),  # Sick Leave from Oct 18 to Oct 20
+    ("28-October", "28-October", "Weekend Efforts"),  # Weekend effort on Oct 28th (Saturday)
+    ("31-October", "31-October", "Public Holiday")  # Public Holiday on Oct 31st
+]
+
+
 # Mocked Function: Replace `load_user_details` in your main script
 def mock_load_user_details():
     return USER_DETAILS_MOCK
@@ -89,7 +108,13 @@ if __name__ == "__main__":
     # Test for September
     generate_mocked_timesheet_for_month(user_id, 9, year, MOCK_LEAVE_DETAILS_SEPTEMBER, "September")
 
+    # Test for October
+    generate_mocked_timesheet_for_month(user_id, 10, year, MOCK_LEAVE_DETAILS_OCTOBER, "October")
 
-# Run the test
-if __name__ == "__main__":
+    # Test for December
+    generate_mocked_timesheet_for_month(user_id, 12, year, MOCK_LEAVE_DETAILS_DECEMBER, "December")
+
     generate_mocked_timesheet()
+
+
+
