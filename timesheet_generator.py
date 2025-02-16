@@ -245,6 +245,9 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
 
     # **Data Rows**
     current_row = 11
+
+    sn_counter = 1  # Start SN from 1
+
     _, days_in_month = monthrange(year, month)
     totals = {"At Work": 0.0, "Public Holiday": 0.0, "Sick Leave": 0.0, "Childcare Leave": 0.0, "Annual Leave": 0.0}
     if ns_leave_present:
@@ -334,7 +337,8 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
         # row_data.append(remark)  # Always add Remarks
         # Replace 0.0 with an empty string to keep cells blank instead of showing 0.0
         row_data = [
-            current_row - 1,
+            #current_row - 1,
+            sn_counter,  # Now SN starts at 1, 2, 3...
             formatted_date,
             "" if at_work == 0.0 else at_work,
             "" if public_holiday == 0.0 else public_holiday,
@@ -458,6 +462,7 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
                 cell.font = black_font
                 cell.alignment = right_alignment
 
+        sn_counter += 1
         current_row += 1
 
     current_row += 2
