@@ -595,7 +595,14 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
         len(str(cell.value)) for row in ws.iter_rows(min_row=11, max_row=11 + days_in_month, min_col=1, max_col=8) for
         cell in row) + 2
 
-    # **Save File**
+    # Ensure "National Service Leave" column width is set AFTER any dynamic changes
+    if ns_leave_present:
+        remarks_leave_col_letter = "I"
+        ns_leave_col_letter = "H"
+        ws.column_dimensions[ns_leave_col_letter].width = 22  # Set to a larger width manually
+        ws.column_dimensions[remarks_leave_col_letter].width = 22
+
+        # **Save File**
     wb.save(output_file)
     print(f"Timesheet saved -> {output_file}")
     return output_file
