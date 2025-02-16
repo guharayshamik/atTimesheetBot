@@ -2,7 +2,7 @@ from datetime import datetime
 from timesheet_generator import generate_timesheet_excel  # Import your function
 import os
 
-# ✅ Mocked user details (Simulating what load_user_details() would return)
+# Mocked user details (Simulating what load_user_details() would return)
 USER_DETAILS_MOCK = {
     "7032290213": {
         "name": "adasd",
@@ -18,39 +18,39 @@ USER_DETAILS_MOCK = {
     }
 }
 
-# ✅ Fixed Mocked Leave Details with Correct Date Format
+# Fixed Mocked Leave Details with Correct Date Format
 MOCK_LEAVE_DETAILS = [
-    ("05-February", "07-February", "Annual Leave"),  # ✅ Correct format
-    ("12-February", "12-February", "Sick Leave"),  # ✅ Correct format
-    ("20-February", "22-February", "NS Leave")  # ✅ Correct format
+    ("05-February", "07-February", "Annual Leave"),  # Correct format
+    ("12-February", "12-February", "Sick Leave"),  # Correct format
+    ("20-February", "22-February", "NS Leave")  # Correct format
 ]
 
 MOCK_LEAVE_DETAILS_JANUARY = [
-    ("03-January", "05-January", "Annual Leave"),  # ✅ Jan 3rd to 5th
-    ("10-January", "10-January", "Sick Leave"),  # ✅ Jan 10th
-    ("15-January", "17-January", "NS Leave"),  # ✅ Jan 15th to 17th
-    ("25-January", "25-January", "Childcare Leave")  # ✅ Jan 25th
+    ("03-January", "05-January", "Annual Leave"),  # Jan 3rd to 5th
+    ("10-January", "10-January", "Sick Leave"),  # Jan 10th
+    ("15-January", "17-January", "NS Leave"),  # Jan 15th to 17th
+    ("25-January", "25-January", "Childcare Leave")  # Jan 25th
 ]
 
 MOCK_LEAVE_DETAILS_AUGUST = [
-    ("02-August", "04-August", "Annual Leave"),  # ✅ Aug 2nd to 4th
-    ("08-August", "08-August", "Sick Leave"),  # ✅ Aug 8th
-  #  ("14-August", "16-August", "NS Leave"),  # ✅ Aug 14th to 16th
-    ("23-August", "23-August", "Public Holiday")  # ✅ Aug 23rd (Simulating a public holiday)
+    ("02-August", "04-August", "Annual Leave"),  # Aug 2nd to 4th
+    ("08-August", "08-August", "Sick Leave"),  # Aug 8th
+  #  ("14-August", "16-August", "NS Leave"),  # Aug 14th to 16th
+    ("23-August", "23-August", "Public Holiday")  # Aug 23rd (Simulating a public holiday)
 ]
 
 MOCK_LEAVE_DETAILS_SEPTEMBER = [
-    ("04-September", "06-September", "Annual Leave"),  # ✅ Sep 4th to 6th
-    ("12-September", "12-September", "Sick Leave"),  # ✅ Sep 12th
-    ("18-September", "20-September", "NS Leave"),  # ✅ Sep 18th to 20th
-    ("27-September", "27-September", "Childcare Leave")  # ✅ Sep 27th
+    ("04-September", "06-September", "Annual Leave"),  # Sep 4th to 6th
+    ("12-September", "12-September", "Sick Leave"),  # Sep 12th
+    ("18-September", "20-September", "NS Leave"),  # Sep 18th to 20th
+    ("27-September", "27-September", "Childcare Leave")  # Sep 27th
 ]
 
-# ✅ Mocked Function: Replace `load_user_details` in your main script
+# Mocked Function: Replace `load_user_details` in your main script
 def mock_load_user_details():
     return USER_DETAILS_MOCK
 
-# ✅ Inject the mock function
+# Inject the mock function
 def generate_mocked_timesheet():
     # Parameters
     user_id = "7032290213"
@@ -90,6 +90,6 @@ if __name__ == "__main__":
     generate_mocked_timesheet_for_month(user_id, 9, year, MOCK_LEAVE_DETAILS_SEPTEMBER, "September")
 
 
-# ✅ Run the test
+# Run the test
 if __name__ == "__main__":
     generate_mocked_timesheet()
