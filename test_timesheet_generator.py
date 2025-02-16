@@ -62,18 +62,18 @@ def generate_mocked_timesheet():
 
     # Check if file exists
     if os.path.exists(excel_file):
-        print(f"✅ Test Passed: Timesheet generated successfully -> {excel_file}")
+        print(f" Test Passed: Timesheet generated successfully -> {excel_file}")
     else:
-        print("❌ Test Failed: No timesheet was generated.")
+        print(" Test Failed: No timesheet was generated.")
 
 def generate_mocked_timesheet_for_month(user_id, month, year, leave_details, month_name):
-    print(f"📌 Generating timesheet for {month_name} {year}...")
+    print(f"Generating timesheet for {month_name} {year}...")
     excel_file = generate_timesheet_excel(user_id, month, year, leave_details)
 
     if os.path.exists(excel_file):
-        print(f"✅ Test Passed: {month_name} timesheet generated successfully -> {excel_file}")
+        print(f"Test Passed: {month_name} timesheet generated successfully -> {excel_file}")
     else:
-        print(f"❌ Test Failed: No timesheet was generated for {month_name}.")
+        print(f"Test Failed: No timesheet was generated for {month_name}.")
 
 
 if __name__ == "__main__":
