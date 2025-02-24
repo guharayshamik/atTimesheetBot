@@ -395,36 +395,7 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
             for col_num in leave_columns:
                 ws.cell(row=current_row, column=col_num).number_format = "0.0"  # Ensure 1 decimal place
 
-        # Remove yellow for PH column and add yellow_fill to Date column
-        # # Apply Yellow Fill to "Date" Column (B) but NOT to Public Holiday (D)
-        # for row in range(11, 11 + days_in_month):  # Assuming row 11 is the first data row
-        #     ws[f"B{row}"].fill = yellow_fill  # Apply Yellow Fill to Date Column
-        #
-        # # Apply Yellow Fill for "At Work", "Sick Leave", "Childcare Leave", and "Annual Leave" Columns (C, E, F, G)
-        # for row in range(11, 11 + days_in_month):
-        #     for col_num in [3, 5, 6, 7]:  # C=At Work, E=Sick Leave, F=Childcare Leave, G=Annual Leave
-        #         cell = ws.cell(row=row, column=col_num)
-        #         cell.fill = yellow_fill
-        #
-        # # Ensure "Public Holiday" (D) is NOT Yellow
-        # for row in range(11, 11 + days_in_month):
-        #     ws[f"D{row}"].fill = PatternFill(fill_type=None)  # Remove yellow fill from Public Holiday
-        #
-        # # Apply right aligned for At Work, Public Holiday, Sick Leave, Childcare Leave, and Annual Leave up to row 31
-        # for row in range(11, 11 + days_in_month):  # Assuming row 11 is the first data row, row 41 is the last (31st day)
-        #     for col_num in [3, 4, 5, 6,
-        #                     7]:  # Columns: At Work (C), Sick Leave (E), Childcare Leave (F), Annual Leave (G)
-        #         cell = ws.cell(row=row, column=col_num)
-        #         cell.alignment = right_alignment
-        #
-        # for row in range(11, 53):  # Adjusting for row range from 11 to 42 (inclusive)
-        #     cell = ws.cell(row=row, column=8)  # Column 8 is "Remarks"
-        #     if cell.value not in ["-", ""]:  # Apply styles only to meaningful values
-        #         cell.font = red_font
-        #         cell.alignment = right_alignment  # Apply right alignment
-        #     else:  # If the value is "-", keep it black
-        #         cell.font = black_font
-        #         cell.alignment = right_alignment
+
         # Apply Yellow Fill to "Date" Column (B) but NOT to Public Holiday (D)
         for row in range(11, 11 + days_in_month):  # Assuming row 11 is the first data row
             ws[f"B{row}"].fill = yellow_fill  # Apply Yellow Fill to Date Column
@@ -472,11 +443,7 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
         current_row += 1
 
     current_row += 2
-    # fixing error text
-    # Apply "Total" Label
-    # ws[f"A{current_row}"] = "Total"
-    # ws[f"A{current_row}"].font = Font(name="Arial", size=12, bold=True, color="000000")  # Only "Total" is bold
-    # ws[f"A{current_row}"].alignment = center_alignment
+
     total_cell = ws[f"A{current_row}"]
     total_cell.value = "Total"
     total_cell.font = Font(name="Arial", size=12, bold=True,

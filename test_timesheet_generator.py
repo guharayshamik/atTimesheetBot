@@ -29,7 +29,9 @@ MOCK_LEAVE_DETAILS_JANUARY = [
   #  ("03-January", "05-January", "Annual Leave"),  # Jan 3rd to 5th
   #  ("10-January", "10-January", "Sick Leave"),  # Jan 10th
   #  ("15-January", "17-January", "NS Leave"),  # Jan 15th to 17th
-    ("25-January", "25-January", "Childcare Leave")  # Jan 25th
+    ("25-January", "25-January", "Childcare Leave"),
+    ("27-January", "27-January", "Half Day"),# Jan 25th
+    ("31-January", "31-January", "Half Day")
 ]
 
 MOCK_LEAVE_DETAILS_AUGUST = [
