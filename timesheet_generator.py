@@ -260,19 +260,24 @@ def generate_timesheet_excel(user_id, month, year, leave_details):
         public_holiday_check = date_obj.strftime("%Y-%m-%d")  # Match keys in PUBLIC_HOLIDAYS
         weekday = date_obj.weekday()
 
+        # **Set Default Work Hours (Before Any Leaves)**
+        if timesheet_preference == 8.5:
+            at_work = 8.5 if weekday in [0, 1, 2, 3] else 8.0  # Mon-Thu: 8.5, Fri: 8.0
+        else:
+            at_work = timesheet_preference if weekday not in [5, 6] else 0.0  # Weekends are 0.0
         # Set "At Work" value dynamically based on timesheet preference
-        at_work = timesheet_preference if weekday not in [5, 6] else 0.0
+        # at_work = timesheet_preference if weekday not in [5, 6] else 0.0
         # public_holiday, sick_leave, childcare_leave, annual_leave = 0.0, 0.0, 0.0, 0.0  # Default to user preference, except weekends
         public_holiday, sick_leave, childcare_leave, annual_leave, ns_leave = 0.0, 0.0, 0.0, 0.0, 0.0
         remark = "-"  # Default empty remark
+
         # **Handle Weekends**
-        if weekday == 5:
+        if weekday == 5:  # Saturday
             at_work = 0.0
             remark = "Saturday"
-
-        if weekday in [5, 6]:
+        elif weekday == 6:  # Sunday
             at_work = 0.0
-            remark = "Weekend"
+            remark = "Sunday"
 
         if public_holiday_check in PUBLIC_HOLIDAYS:
             at_work = 0.0

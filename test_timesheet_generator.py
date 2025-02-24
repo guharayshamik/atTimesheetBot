@@ -20,15 +20,15 @@ USER_DETAILS_MOCK = {
 
 # Fixed Mocked Leave Details with Correct Date Format
 MOCK_LEAVE_DETAILS = [
-    ("05-February", "07-February", "Annual Leave"),  # Correct format
-    ("12-February", "12-February", "Sick Leave"),  # Correct format
+   # ("05-February", "07-February", "Annual Leave"),  # Correct format
+   # ("12-February", "12-February", "Sick Leave"),  # Correct format
     ("20-February", "22-February", "NS Leave")  # Correct format
 ]
 
 MOCK_LEAVE_DETAILS_JANUARY = [
-    ("03-January", "05-January", "Annual Leave"),  # Jan 3rd to 5th
-    ("10-January", "10-January", "Sick Leave"),  # Jan 10th
-    ("15-January", "17-January", "NS Leave"),  # Jan 15th to 17th
+  #  ("03-January", "05-January", "Annual Leave"),  # Jan 3rd to 5th
+  #  ("10-January", "10-January", "Sick Leave"),  # Jan 10th
+  #  ("15-January", "17-January", "NS Leave"),  # Jan 15th to 17th
     ("25-January", "25-January", "Childcare Leave")  # Jan 25th
 ]
 
