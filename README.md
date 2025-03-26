@@ -8,7 +8,7 @@ Key Features:
 
 **Data Reset Option** - You can reset/remove your data anytime. 
 
-**Accuracy** - It ensures the correct template format as required by our Finance team (Verified with them). 
+**Accuracy** - It ensures the correct template format as defined. 
 
 
 🤖 Bot Details: 
